@@ -1,0 +1,56 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26124.0
+MinimumVisualStudioVersion = 15.0.26124.0
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{52BAB907-5E18-4ACF-B787-09AD6465D51F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Net.Data.Dapper", "src\Net.Data.Dapper\Net.Data.Dapper.csproj", "{BEC904D9-94EC-44AF-BB63-958822F38991}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{CCF492ED-18EB-490C-BE84-41853C904683}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Net.Data.Dapper.Test", "test\Net.Data.Dapper.Test\Net.Data.Dapper.Test.csproj", "{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Debug|x64.ActiveCfg = Debug|x64
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Debug|x64.Build.0 = Debug|x64
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Debug|x86.ActiveCfg = Debug|x86
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Debug|x86.Build.0 = Debug|x86
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Release|x64.ActiveCfg = Release|x64
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Release|x64.Build.0 = Release|x64
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Release|x86.ActiveCfg = Release|x86
+		{BEC904D9-94EC-44AF-BB63-958822F38991}.Release|x86.Build.0 = Release|x86
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Debug|x64.ActiveCfg = Debug|x64
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Debug|x64.Build.0 = Debug|x64
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Debug|x86.ActiveCfg = Debug|x86
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Debug|x86.Build.0 = Debug|x86
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Release|x64.ActiveCfg = Release|x64
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Release|x64.Build.0 = Release|x64
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Release|x86.ActiveCfg = Release|x86
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{BEC904D9-94EC-44AF-BB63-958822F38991} = {52BAB907-5E18-4ACF-B787-09AD6465D51F}
+		{C690FBD7-5F2E-42BF-86E6-F8B134BDF04E} = {CCF492ED-18EB-490C-BE84-41853C904683}
+	EndGlobalSection
+EndGlobal

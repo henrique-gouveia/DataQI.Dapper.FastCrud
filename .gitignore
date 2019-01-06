@@ -1,0 +1,8 @@
+/.vs
+/.vscode
+/packages
+bin
+obj
+*.user
+*.nupkg
+*.suo
