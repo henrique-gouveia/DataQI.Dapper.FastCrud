@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 using Dapper.FastCrud;
 
-namespace Net.Data.Dapper.Repository
+namespace Net.Data.Dapper.FastCrud.Repository
 {
     public class DapperRepository<TEntity> : IDapperRepository<TEntity> where TEntity : class, new()
     {

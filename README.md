@@ -1,1 +1,1 @@
-# Net.Data.Dapper
+# Net.Data.Dapper.FastCrud

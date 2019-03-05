@@ -1,6 +1,6 @@
 using System.Data;
 
-namespace Net.Data.Dapper.Test.Extensions
+namespace Net.Data.Dapper.FastCrud.Test.Extensions
 {
     public static class DbCommandExtensions
     {

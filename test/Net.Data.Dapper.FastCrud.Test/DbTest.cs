@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 
-using Net.Data.Dapper.Test.Extensions;
-using Net.Data.Dapper.Test.Repository.Domain;
-using Net.Data.Dapper.Test.Resources;
+using Net.Data.Dapper.FastCrud.Test.Extensions;
+using Net.Data.Dapper.FastCrud.Test.Repository.Domain;
+using Net.Data.Dapper.FastCrud.Test.Resources;
 
-namespace Net.Data.Dapper.Test
+namespace Net.Data.Dapper.FastCrud.Test
 {
     public class DbTest
     {

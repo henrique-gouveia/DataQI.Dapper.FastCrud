@@ -1,4 +1,4 @@
-namespace Net.Data.Dapper.Test.Resources
+namespace Net.Data.Dapper.FastCrud.Test.Resources
 {
     public static class SqlResource
     {

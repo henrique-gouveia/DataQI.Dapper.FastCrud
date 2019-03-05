@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Net.Data.Dapper.Repository
+namespace Net.Data.Dapper.FastCrud.Repository
 {
     public interface IDapperRepository<TEntity> where TEntity : class, new()
     {

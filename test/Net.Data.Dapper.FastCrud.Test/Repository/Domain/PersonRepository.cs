@@ -4,10 +4,10 @@ using System.Linq;
 
 using Dapper.FastCrud;
 
-using Net.Data.Dapper.Repository;
-using Net.Data.Dapper.Test.Repository.Domain;
+using Net.Data.Dapper.FastCrud.Repository;
+using Net.Data.Dapper.FastCrud.Test.Repository.Domain;
 
-namespace Net.Data.Dapper.Test.Repository.Domain
+namespace Net.Data.Dapper.FastCrud.Test.Repository.Domain
 {
     public class PersonRepository : DapperRepository<Person>, IPersonRepository
     {

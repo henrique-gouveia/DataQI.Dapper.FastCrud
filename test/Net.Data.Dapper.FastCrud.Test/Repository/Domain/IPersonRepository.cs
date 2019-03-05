@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Net.Data.Dapper.Repository;
+using Net.Data.Dapper.FastCrud.Repository;
 
-namespace Net.Data.Dapper.Test.Repository.Domain
+namespace Net.Data.Dapper.FastCrud.Test.Repository.Domain
 {
     public interface IPersonRepository : IDapperRepository<Person>
     {

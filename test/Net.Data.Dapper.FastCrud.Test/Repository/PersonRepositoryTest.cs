@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using Xunit;
 using ExpectedObjects;
 
-using Net.Data.Dapper.Test.Fixtures;
-using Net.Data.Dapper.Test.Repository.Domain;
+using Net.Data.Dapper.FastCrud.Test.Fixtures;
+using Net.Data.Dapper.FastCrud.Test.Repository.Domain;
 
-using Net.Data.Dapper.Repository;
+using Net.Data.Dapper.FastCrud.Repository;
 
-namespace Net.Data.Dapper.Test.Repository
+namespace Net.Data.Dapper.FastCrud.Test.Repository
 {
     public class PersonRepositoryTest : IClassFixture<DbFixture>
     {

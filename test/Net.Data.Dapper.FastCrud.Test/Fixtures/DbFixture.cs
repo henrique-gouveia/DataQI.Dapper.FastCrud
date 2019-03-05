@@ -1,8 +1,9 @@
 using System.Collections.Generic;
 using Dapper.FastCrud;
-using Net.Data.Dapper.Test.Repository.Domain;
 
-namespace Net.Data.Dapper.Test.Fixtures
+using Net.Data.Dapper.FastCrud.Test.Repository.Domain;
+
+namespace Net.Data.Dapper.FastCrud.Test.Fixtures
 {
     public class DbFixture
     {
