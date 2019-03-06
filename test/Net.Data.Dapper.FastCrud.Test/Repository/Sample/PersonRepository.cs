@@ -5,9 +5,9 @@ using System.Linq;
 using Dapper.FastCrud;
 
 using Net.Data.Dapper.FastCrud.Repository;
-using Net.Data.Dapper.FastCrud.Test.Repository.Domain;
+using Net.Data.Dapper.FastCrud.Test.Repository.Sample;
 
-namespace Net.Data.Dapper.FastCrud.Test.Repository.Domain
+namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
 {
     public class PersonRepository : DapperRepository<Person>, IPersonRepository
     {
@@ -28,8 +28,11 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository.Domain
             //
             // 2. A segunda, seria utilizar o parâmetro statementOptions, porém ainda existirá a necessidade do acoplamento
             //    com o metadados especifico do banco, no caso, com o nome de cada respectiva coluna no banco de dados.
- 
-            var persons = connection.Find<Person>(options => options.Where($" FULL_NAME = '{fullName}' "));
+
+            var persons = connection.Find<Person>(statement => statement
+                                    .Where($"{nameof(Person.FullName):C} = @fullName")
+                                    .WithParameters(new { fullName }));
+
             return persons.FirstOrDefault();
         }
 

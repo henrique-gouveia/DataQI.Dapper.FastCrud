@@ -1,7 +1,13 @@
+using System;
+using System.Data;
+using System.Data.SQLite;
 using System.Collections.Generic;
+
 using Dapper.FastCrud;
 
-using Net.Data.Dapper.FastCrud.Test.Repository.Domain;
+using Net.Data.Dapper.FastCrud.Test.Repository.Sample;
+using Net.Data.Dapper.FastCrud.Test.Extensions;
+using Net.Data.Dapper.FastCrud.Test.Resources;
 
 namespace Net.Data.Dapper.FastCrud.Test.Fixtures
 {
@@ -11,30 +17,26 @@ namespace Net.Data.Dapper.FastCrud.Test.Fixtures
         {
             OrmConfiguration.DefaultDialect = SqlDialect.SqLite;
 
-            DbTest = DbTest.Instance;
-            PersonRepository = new PersonRepository(DbTest.Connection);
+            Connection = new SQLiteConnection("Data Source=:memory:");
+            Connection.Open();
 
-            DbTest.CreateTables();
-            DbTest.DeleteAllPersons();
+            PersonRepository = new PersonRepository(Connection);
 
-            InsertDefaultPersons();
+            CreateTables();
         }
 
-        private void InsertDefaultPersons()
+        private void CreateTables() 
         {
-            var persons = new List<Person>()
+            using (var command = Connection.CreateCommand())
             {
-                PersonBuilder.NewInstance().Build(),
-                PersonBuilder.NewInstance().Build(),
-                PersonBuilder.NewInstance().Build(),
-                PersonBuilder.NewInstance().Build(),
-                PersonBuilder.NewInstance().Build(),
-            };
-            persons.ForEach(p => DbTest.InsertPerson(p));
+                command
+                    .AddCommandText(SqlResource.PERSON_CREATE_SCRIPT)
+                    .PrepareAndExecuteNonQuery();
+            }
         }
 
-        public DbTest DbTest { get; private set; }
+        public IDbConnection Connection { get; }
 
-        public IPersonRepository PersonRepository { get; private set; }
+        public IPersonRepository PersonRepository { get; }
     }
 }

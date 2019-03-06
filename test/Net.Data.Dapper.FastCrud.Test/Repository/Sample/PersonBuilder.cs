@@ -1,7 +1,7 @@
 using System;
 using Bogus;
 
-namespace Net.Data.Dapper.FastCrud.Test.Repository.Domain
+namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
 {
     public class PersonBuilder
     {
