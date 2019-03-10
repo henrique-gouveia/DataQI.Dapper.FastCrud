@@ -1,12 +1,17 @@
+using System;
+using System.ComponentModel.Design;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
 
-namespace Net.Data.Dapper.FastCrud.Repository
+using Net.Data.Commons.Repository;
+
+namespace Net.Data.Dapper.FastCrud.Repository.Support
 {
-    public class DapperRepository<TEntity> : IDapperRepository<TEntity> where TEntity : class, new()
+    public class DapperRepository<TEntity> : IDapperRepository<TEntity> 
+        where TEntity : class, new()
     {
         protected IDbConnection connection;
 
@@ -32,6 +37,46 @@ namespace Net.Data.Dapper.FastCrud.Repository
             this.connection = connection;
         }
 
+        public void Delete(TEntity entity)
+        {
+            connection.Delete(entity);
+        }
+
+        public async Task DeleteAsync(TEntity entity)
+        {
+            await connection.DeleteAsync(entity);
+        }
+
+        public bool Exists(TEntity id)
+        {
+            var entity = FindOne(id);
+            return entity != null;
+        }
+
+        public async Task<bool> ExistsAsync(TEntity id)
+        {
+            var entity = await FindOneAsync(id);
+            return entity != null;
+        }
+     
+        public IEnumerable<TEntity> Find(FormattableString whereClause, object parameters)
+        {
+            var entities = connection.Find<TEntity>(statement => statement
+                .Where(whereClause)
+                .WithParameters(parameters));
+
+            return entities;
+        }
+
+        public async Task<IEnumerable<TEntity>> FindAsync(FormattableString whereClause, object parameters)
+        {
+            var entities = await connection.FindAsync<TEntity>(statement => statement
+                .Where(whereClause)
+                .WithParameters(parameters));
+            
+            return entities;
+        }
+
         public IEnumerable<TEntity> FindAll()
         {
             var entities = connection.Find<TEntity>();
@@ -53,18 +98,6 @@ namespace Net.Data.Dapper.FastCrud.Repository
         {
             var entity = await connection.GetAsync(id);
             return entity;
-        }
-
-        public bool Exists(TEntity id)
-        {
-            var entity = FindOne(id);
-            return entity != null;
-        }
-
-        public async Task<bool> ExistsAsync(TEntity id)
-        {
-            var entity = await FindOneAsync(id);
-            return entity != null;
         }
 
         public void Insert(TEntity entity)
@@ -91,16 +124,6 @@ namespace Net.Data.Dapper.FastCrud.Repository
                 await connection.UpdateAsync(entity);
             else
                 await InsertAsync(entity);
-        }
-
-        public void Delete(TEntity entity)
-        {
-            connection.Delete(entity);
-        }
-
-        public async Task DeleteAsync(TEntity entity)
-        {
-            await connection.DeleteAsync(entity);
         }
     }
 }

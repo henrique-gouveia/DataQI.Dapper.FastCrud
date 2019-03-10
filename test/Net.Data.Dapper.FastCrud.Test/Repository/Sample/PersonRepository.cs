@@ -1,11 +1,13 @@
+using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Dynamic;
 using System.Linq;
-
+using System.Reflection;
 using Dapper.FastCrud;
 
 using Net.Data.Dapper.FastCrud.Repository;
-using Net.Data.Dapper.FastCrud.Test.Repository.Sample;
+using Net.Data.Dapper.FastCrud.Repository.Support;
 
 namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
 {
@@ -36,9 +38,16 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
             return persons.FirstOrDefault();
         }
 
-        public IEnumerable<Person> FindByTelefone(string telefone)
+        public Person FindByPhone(string phone)
         {
-            throw new System.NotImplementedException();
+            FormattableString whereClause = $"TELEPHONE = @phone";
+            
+            dynamic parameters = new ExpandoObject();
+            var parametersDictionary = (IDictionary<string, object>) parameters;
+            parametersDictionary.Add("phone", phone);
+            
+            var persons = Find(whereClause, parametersDictionary);
+            return persons.FirstOrDefault();
         }
     }
 }

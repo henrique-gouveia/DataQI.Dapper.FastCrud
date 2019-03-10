@@ -272,6 +272,21 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
             }
         }
 
+        [Fact]
+        public void TestFindByPhone()
+        {
+            var personsExpected = InsertTestPersons();
+            var personRepositoryCustom = new PersonRepository(connection);
+
+            while(personsExpected.MoveNext())
+            {
+                var personExpected = personsExpected.Current;
+                var person = personRepositoryCustom.FindByPhone(personExpected.Phone);
+
+                personExpected.ToExpectedObject().ShouldEqual(person);
+            }
+        }
+
         private IEnumerator<Person> InsertTestPersons()
         {
             var persons = InsertTestPersonsList();

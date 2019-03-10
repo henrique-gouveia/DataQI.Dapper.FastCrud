@@ -7,6 +7,6 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
     {
         Person FindByFullName(string fullName);
 
-        IEnumerable<Person> FindByTelefone(string telefone);
+        Person FindByPhone(string phone);
     }
 }
