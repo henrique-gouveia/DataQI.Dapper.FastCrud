@@ -1,5 +1,6 @@
-using System.Data;
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -14,7 +15,7 @@ using Net.Data.Dapper.FastCrud.Test.Repository.Sample;
 
 namespace Net.Data.Dapper.FastCrud.Test.Repository
 {
-    public class PersonRepositoryTest : IClassFixture<DbFixture>
+    public class PersonRepositoryTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
 
@@ -26,199 +27,155 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
             personRepository = fixture.PersonRepository;
         }
 
-        [Fact]
-        public void TestInsert()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestInsert(bool useAsyncMethod)
         {
             var countBefore = connection.Count<Person>();
-            var countExpected = countBefore + 1;
+            var countExpected = ++countBefore;
 
             var personExpected = PersonBuilder.NewInstance().Build();
-            personRepository.Insert(personExpected);
+            if (useAsyncMethod)
+                personRepository.InsertAsync(personExpected).Wait();
+            else
+                personRepository.Insert(personExpected);
 
             Assert.True(personExpected.Id > 0);
             Assert.Equal(countExpected, connection.Count<Person>());
         }
 
-        [Fact]
-        public async Task TestInsertAsync()
-        {
-            var countBefore = await connection.CountAsync<Person>();
-            var countExpected = countBefore + 1;
-
-            var personExpected = PersonBuilder.NewInstance().Build();
-            await personRepository.InsertAsync(personExpected);
-
-            Assert.True(personExpected.Id > 0);
-            Assert.Equal(countExpected, await connection.CountAsync<Person>());
-        }
-
-        [Fact]
-        public void TestSave()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestSave(bool useAsyncMethod)
         {
             var countBefore = connection.Count<Person>();
-            var countExpected = countBefore + 1;
+            var countExpected = ++countBefore;
 
             var personInserted = PersonBuilder.NewInstance().Build();
-            personRepository.Save(personInserted);
-
+            SavePerson(personInserted, useAsyncMethod);
             Assert.True(personInserted.Id > 0);
             Assert.Equal(countExpected, connection.Count<Person>());
 
             var personUpdated = PersonBuilder.NewInstance().SetId(personInserted.Id).Build();
-            personRepository.Save(personUpdated);
-
+            SavePerson(personUpdated, useAsyncMethod);
             Assert.Equal(personInserted.Id, personUpdated.Id);
             Assert.Equal(countExpected, connection.Count<Person>());
         }
 
-        [Fact]
-        public async Task TestSaveAsync()
+        private void SavePerson(Person person, bool useAsyncMethod)
         {
-            var countBefore = await connection.CountAsync<Person>();
-            var countExpected = countBefore + 1;
-
-            var personInserted = PersonBuilder.NewInstance().Build();
-            await personRepository.SaveAsync(personInserted);
-
-            Assert.True(personInserted.Id > 0);
-            Assert.Equal(countExpected, connection.Count<Person>());
-
-            var personUpdated = PersonBuilder.NewInstance().SetId(personInserted.Id).Build();
-            await personRepository.SaveAsync(personUpdated);
-
-            Assert.Equal(personInserted.Id, personUpdated.Id);
-            Assert.Equal(countExpected, connection.Count<Person>());
+            if (useAsyncMethod)
+                personRepository.SaveAsync(person).Wait();
+            else
+                personRepository.Save(person);
         }
 
-        [Fact]
-        public void TestExists()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestExists(bool useAsyncMethod)
         {
             var personsExpected = InsertTestPersons();
 
             while (personsExpected.MoveNext()) 
             {
-                var personExpected = personsExpected.Current;
-                var personExists = personRepository.Exists(new Person() { Id = personExpected.Id });
+                var person = personsExpected.Current;
+                bool personExists = ExistsPerson(person, useAsyncMethod);
 
                 Assert.True(personExists);
             }
         }
 
-        [Fact]
-        public void TestExistsReturnsFalseWhenNotFoundEntity()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestExistsEntityNotFoundReturnsFalse(bool useAsyncMethod)
         {
             InsertTestPersons();
-            var personExists = personRepository.Exists(new Person());
+            var personExists = ExistsPerson(new Person(), useAsyncMethod);
             Assert.False(personExists);
         }
 
-        [Fact]
-        public async void TestExistsAsync()
+        private bool ExistsPerson(Person person, bool useAsyncMethod)
         {
-            var personsExpected = InsertTestPersons();
-
-            while (personsExpected.MoveNext()) 
-            {
-                var personExpected = personsExpected.Current;
-                var personExists = await personRepository.ExistsAsync(new Person() { Id = personExpected.Id });
-                
-                Assert.True(personExists);
-            }
+            if (useAsyncMethod)
+                return personRepository.ExistsAsync(person).Result;
+            else
+                return personRepository.Exists(person);
         }
-
-        [Fact]
-        public void TestFindAll()
+        
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindAll(bool useAsyncMethod)
         {
             var personsExpected = InsertTestPersonsList();
-            var persons = personRepository.FindAll();
+            IEnumerable<Person> persons = null;
+
+            if (useAsyncMethod)
+                persons = personRepository.FindAllAsync().Result;
+            else
+                persons = personRepository.FindAll();
 
             personsExpected.ToExpectedObject().ShouldEqual(persons);
         }
-
-        [Fact]
-        public async Task TestFindAllAsync()
-        {
-            var personsExpected = InsertTestPersonsList();
-            var persons = await personRepository.FindAllAsync();
-
-            personsExpected.ToExpectedObject().ShouldEqual(persons);
-        }
-
-        [Fact]
-        public void TestFindOne()
+        
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindOne(bool useAsyncMethod)
         {
             var personsExpected = InsertTestPersons();
 
             while (personsExpected.MoveNext())
             {
                 var personExpected = personsExpected.Current;
-                var person = personRepository.FindOne(personExpected);
+                Person person = FindOnePerson(personExpected, useAsyncMethod);
 
                 personExpected.ToExpectedObject().ShouldEqual(person);
             }
         }
 
-        [Fact]
-        public void TestFindOneReturnsNullWhenNotFoundEntity() 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindOneEntityNotFoundReturnsNull(bool useAsyncMethod) 
         {
             InsertTestPersons();
-            var person = personRepository.FindOne(new Person());
+            var person = FindOnePerson(new Person(), useAsyncMethod);
             
             Assert.Null(person);
         }
 
-        [Fact]
-        public async void TestFindOneAsync()
+        private Person FindOnePerson(Person person, bool useAsyncMethod)
         {
-            var personsExpected = InsertTestPersons();
-
-            while (personsExpected.MoveNext())
-            {
-                var personExpected = personsExpected.Current;
-                var person = await personRepository.FindOneAsync(new Person() { Id = personExpected.Id });
-                
-                personExpected.ToExpectedObject().ShouldEqual(person);
-            }
+            if (useAsyncMethod)
+                return personRepository.FindOneAsync(person).Result;
+            else
+                return personRepository.FindOne(person);
         }
 
-        [Fact]
-        public async void TestFindOneReturnsNullWhenNotFoundEntityAsync() 
-        {
-            InsertTestPersons();
-            var person = await personRepository.FindOneAsync(new Person());
-            
-            Assert.Null(person);
-        }
-
-        [Fact]
-        public void TestDelete()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestDelete(bool useAsyncMethod)
         {
             var persons = InsertTestPersons();
 
             while (persons.MoveNext())
             {
                 var person = persons.Current;
-                personRepository.Delete(person);
+                if (useAsyncMethod)
+                    personRepository.DeleteAsync(person).Wait();
+                else
+                    personRepository.Delete(person);
 
-                Assert.False(personRepository.Exists(person));
-                Assert.Null(personRepository.FindOne(person));
+                Assert.False(ExistsPerson(person, useAsyncMethod));
+                Assert.Null(FindOnePerson(person, useAsyncMethod));
             }
-        }
-
-        [Fact]
-        public async Task TestDeleteAsync()
-        {
-            var persons = InsertTestPersons();
-
-            while (persons.MoveNext())
-            {
-                var person = persons.Current;
-                await personRepository.DeleteAsync(person);
-
-                Assert.False(await personRepository.ExistsAsync(person));
-                Assert.Null(await personRepository.FindOneAsync(person));
-            }
-        }        
+        }       
 
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // 1. Quando desejo criar uma busca por outra propriedade tenho que implementar, porém cada desenvolvedor,   
@@ -257,21 +214,6 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
         //    
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // [Fact]
-        // public void TestFindByFullName()
-        // {
-        //     var personsExpected = InsertTestPersons();
-        //     var personRepositoryCustom = new PersonRepository(connection);
-
-        //     while (personsExpected.MoveNext())
-        //     {
-        //         var personExpected = personsExpected.Current;
-        //         var person = personRepositoryCustom.FindByFullName(personExpected.FullName);
-
-        //         personExpected.ToExpectedObject().ShouldEqual(person);
-        //     }
-        // }
-        
         [Fact]
         public void TestFindByFullName()
         {
@@ -285,21 +227,6 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
                 personExpected.ToExpectedObject().ShouldEqual(persons.FirstOrDefault());
             }
         }
-
-        // [Fact]
-        // public void TestFindByPhone()
-        // {
-        //     var personsExpected = InsertTestPersons();
-        //     var personRepositoryCustom = new PersonRepository(connection);
-
-        //     while(personsExpected.MoveNext())
-        //     {
-        //         var personExpected = personsExpected.Current;
-        //         var person = personRepositoryCustom.FindByPhone(personExpected.Phone);
-
-        //         personExpected.ToExpectedObject().ShouldEqual(person);
-        //     }
-        // }
 
         [Fact]
         public void TestFindByPhone()
@@ -339,6 +266,24 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
             });
 
             return persons;
-        }        
+        }
+
+        #region IDisposable Support
+        private bool disposedValue = false;
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                connection.BulkDelete<Person>();
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }
