@@ -4,14 +4,16 @@ using System.Data;
 using System.Dynamic;
 using System.Linq;
 using System.Reflection;
+
 using Dapper.FastCrud;
 
+using Net.Data.Commons.Criterions.Support;
 using Net.Data.Dapper.FastCrud.Repository;
 using Net.Data.Dapper.FastCrud.Repository.Support;
 
 namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
 {
-    public class PersonRepository : DapperRepository<Person>, IPersonRepository
+    public class PersonRepository : DapperRepository<Person> //, IPersonRepository
     {
         public PersonRepository(IDbConnection connection) : base(connection)
         {
@@ -40,13 +42,11 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
 
         public Person FindByPhone(string phone)
         {
-            FormattableString whereClause = $"TELEPHONE = @phone";
+            var criteria = new Criteria()
+                .Add(Restrictions.Equal("TELEPHONE", "@phone"))
+                .WithParameters(new { phone });
             
-            dynamic parameters = new ExpandoObject();
-            var parametersDictionary = (IDictionary<string, object>) parameters;
-            parametersDictionary.Add("phone", phone);
-            
-            var persons = Find(whereClause, parametersDictionary);
+            var persons = Find(c => criteria);
             return persons.FirstOrDefault();
         }
     }

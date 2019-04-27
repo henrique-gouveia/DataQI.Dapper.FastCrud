@@ -18,7 +18,7 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
     {
         private readonly IDbConnection connection;
 
-        private readonly IDapperRepository<Person> personRepository;
+        private readonly IPersonRepository personRepository;
 
         public PersonRepositoryTest(DbFixture fixture)
         {
@@ -257,33 +257,61 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository
         //    
         ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+        // [Fact]
+        // public void TestFindByFullName()
+        // {
+        //     var personsExpected = InsertTestPersons();
+        //     var personRepositoryCustom = new PersonRepository(connection);
+
+        //     while (personsExpected.MoveNext())
+        //     {
+        //         var personExpected = personsExpected.Current;
+        //         var person = personRepositoryCustom.FindByFullName(personExpected.FullName);
+
+        //         personExpected.ToExpectedObject().ShouldEqual(person);
+        //     }
+        // }
+        
         [Fact]
         public void TestFindByFullName()
         {
             var personsExpected = InsertTestPersons();
-            var personRepositoryCustom = new PersonRepository(connection);
 
             while (personsExpected.MoveNext())
             {
                 var personExpected = personsExpected.Current;
-                var person = personRepositoryCustom.FindByFullName(personExpected.FullName);
+                var persons = personRepository.FindByFullName(personExpected.FullName);
 
-                personExpected.ToExpectedObject().ShouldEqual(person);
+                personExpected.ToExpectedObject().ShouldEqual(persons.FirstOrDefault());
             }
         }
+
+        // [Fact]
+        // public void TestFindByPhone()
+        // {
+        //     var personsExpected = InsertTestPersons();
+        //     var personRepositoryCustom = new PersonRepository(connection);
+
+        //     while(personsExpected.MoveNext())
+        //     {
+        //         var personExpected = personsExpected.Current;
+        //         var person = personRepositoryCustom.FindByPhone(personExpected.Phone);
+
+        //         personExpected.ToExpectedObject().ShouldEqual(person);
+        //     }
+        // }
 
         [Fact]
         public void TestFindByPhone()
         {
             var personsExpected = InsertTestPersons();
-            var personRepositoryCustom = new PersonRepository(connection);
 
             while(personsExpected.MoveNext())
             {
                 var personExpected = personsExpected.Current;
-                var person = personRepositoryCustom.FindByPhone(personExpected.Phone);
+                var persons = personRepository.FindByPhone(personExpected.Phone);
 
-                personExpected.ToExpectedObject().ShouldEqual(person);
+                personExpected.ToExpectedObject().ShouldEqual(persons.FirstOrDefault());
             }
         }
 

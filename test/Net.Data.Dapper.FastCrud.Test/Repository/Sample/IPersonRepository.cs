@@ -5,8 +5,10 @@ namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
 {
     public interface IPersonRepository : IDapperRepository<Person>
     {
-        Person FindByFullName(string fullName);
+        // Person FindByFullName(string fullName);
+        IEnumerable<Person> FindByFullName(string fullName);
 
-        Person FindByPhone(string phone);
+        // Person FindByPhone(string phone);
+        IEnumerable<Person> FindByPhone(string phone);
     }
 }

@@ -5,9 +5,11 @@ using System.Collections.Generic;
 
 using Dapper.FastCrud;
 
+using Net.Data.Commons.Repository.Core;
 using Net.Data.Dapper.FastCrud.Test.Repository.Sample;
 using Net.Data.Dapper.FastCrud.Test.Extensions;
 using Net.Data.Dapper.FastCrud.Test.Resources;
+using Net.Data.Dapper.FastCrud.Repository.Support;
 
 namespace Net.Data.Dapper.FastCrud.Test.Fixtures
 {
@@ -20,7 +22,8 @@ namespace Net.Data.Dapper.FastCrud.Test.Fixtures
             Connection = new SQLiteConnection("Data Source=:memory:");
             Connection.Open();
 
-            PersonRepository = new PersonRepository(Connection);
+            //PersonRepository = new PersonRepository(Connection);
+            PersonRepository = RepositoryProxy.Create<IPersonRepository>(() => new DapperRepository<Person>(Connection));
 
             CreateTables();
         }

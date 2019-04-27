@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Dapper.FastCrud;
 
 using Net.Data.Commons.Repository;
+using Net.Data.Commons.Criterions;
+using Net.Data.Commons.Criterions.Support;
 
 namespace Net.Data.Dapper.FastCrud.Repository.Support
 {
@@ -58,21 +60,25 @@ namespace Net.Data.Dapper.FastCrud.Repository.Support
             var entity = await FindOneAsync(id);
             return entity != null;
         }
-     
-        public IEnumerable<TEntity> Find(FormattableString whereClause, object parameters)
+
+        public IEnumerable<TEntity> Find(Func<ICriteria, ICriteria> criteriaBuilder)
         {
+            var criteria = criteriaBuilder(new Criteria());
+
             var entities = connection.Find<TEntity>(statement => statement
-                .Where(whereClause)
-                .WithParameters(parameters));
+                .Where($"{criteria.ToSqlString()}")
+                .WithParameters(criteria.Parameters));
 
             return entities;
         }
 
-        public async Task<IEnumerable<TEntity>> FindAsync(FormattableString whereClause, object parameters)
+        public async Task<IEnumerable<TEntity>> FindAsync(Func<ICriteria, ICriteria> criteriaBuilder)
         {
+            var criteria = criteriaBuilder(new Criteria());
+
             var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where(whereClause)
-                .WithParameters(parameters));
+                .Where($"{criteria.ToSqlString()}")
+                .WithParameters(criteria.Parameters));
             
             return entities;
         }
