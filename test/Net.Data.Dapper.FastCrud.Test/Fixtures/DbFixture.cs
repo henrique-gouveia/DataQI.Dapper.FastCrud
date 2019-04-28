@@ -22,8 +22,11 @@ namespace Net.Data.Dapper.FastCrud.Test.Fixtures
             Connection = new SQLiteConnection("Data Source=:memory:");
             Connection.Open();
 
-            //PersonRepository = new PersonRepository(Connection);
-            PersonRepository = RepositoryProxy.Create<IPersonRepository>(() => new DapperRepository<Person>(Connection));
+            // 1. PersonRepository = new PersonRepository(Connection);
+            // 2. PersonRepository = RepositoryProxy.Create<IPersonRepository>(() => new DapperRepository<Person>(Connection));
+            // 3. 
+            var repositoryFactory = new DapperRepositoryFactory(Connection);
+            PersonRepository = repositoryFactory.GetRepository<IPersonRepository>();
 
             CreateTables();
         }
