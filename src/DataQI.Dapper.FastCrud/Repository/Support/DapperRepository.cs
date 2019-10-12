@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 using Dapper.FastCrud;
 
-using Net.Data.Commons.Repository;
-using Net.Data.Commons.Criterions;
-using Net.Data.Commons.Criterions.Support;
+using DataQI.Commons.Repository;
+using DataQI.Commons.Criterions;
+using DataQI.Commons.Criterions.Support;
 
-namespace Net.Data.Dapper.FastCrud.Repository.Support
+namespace DataQI.Dapper.FastCrud.Repository.Support
 {
     public class DapperRepository<TEntity> : IDapperRepository<TEntity> 
         where TEntity : class, new()
@@ -19,23 +19,6 @@ namespace Net.Data.Dapper.FastCrud.Repository.Support
 
         public DapperRepository(IDbConnection connection)
         {
-            // 1. O Dapper.FastCrud não detecta qual o driver (SqlDialect) está sendo utilizado.
-            //    Isso é necessário para que os statements sejam preparados de acordo com as
-            //    as especificações de cada banco, os suportados (MsSql, MySql, SqLite, PostgreSql)
-            //
-            // 2. Além disso, manter a conexão aberta com o banco aguardando o Garbage Collector se torna
-            //    custoso. Executar um try finally para abrir (connection.Open()) e fechar (connection.Close())
-            //    também não é solução ideal, o uso da conection compartilhada entre métodos sincronos e assincronos pode 
-            //    causar problemas com estados inadequados. A solução seria seria criar a conexão sempre que necessário utilizar 
-            //    fazendo uso do using: using (var connection = new SqlConnection) { ... }, mas só isso não seria uma solução 
-            //    elegante, pois estariamos nos acoplando com a classe concreta provedora da conexão.
-            //   
-            //    Solução: Substituir IDbConnection por um Factory Method IDbConnectionFactory responsável por saber os 
-            //             detalhes da instância e de qual dialeto se trata, com isso, basta atribuir na classe base e 
-            //             isso ficaria transparente para todos.
-            //             ...
-            //             OrmConfiguration.DefaultDialect = connectionFactory.Dialect;
-
             this.connection = connection;
         }
 

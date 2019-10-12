@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using Net.Data.Dapper.FastCrud.Repository;
+using DataQI.Dapper.FastCrud.Repository;
 
-namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
+namespace DataQI.Dapper.FastCrud.Test.Repository.Sample
 {
     public interface IPersonRepository : IDapperRepository<Person>
     {

@@ -9,11 +9,11 @@ using Dapper.FastCrud;
 using Xunit;
 using ExpectedObjects;
 
-using Net.Data.Dapper.FastCrud.Repository;
-using Net.Data.Dapper.FastCrud.Test.Fixtures;
-using Net.Data.Dapper.FastCrud.Test.Repository.Sample;
+using DataQI.Dapper.FastCrud.Repository;
+using DataQI.Dapper.FastCrud.Test.Fixtures;
+using DataQI.Dapper.FastCrud.Test.Repository.Sample;
 
-namespace Net.Data.Dapper.FastCrud.Test.Repository
+namespace DataQI.Dapper.FastCrud.Test.Repository
 {
     public class PersonRepositoryTest : IClassFixture<DbFixture>, IDisposable
     {

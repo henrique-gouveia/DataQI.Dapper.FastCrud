@@ -7,11 +7,11 @@ using System.Reflection;
 
 using Dapper.FastCrud;
 
-using Net.Data.Commons.Criterions.Support;
-using Net.Data.Dapper.FastCrud.Repository;
-using Net.Data.Dapper.FastCrud.Repository.Support;
+using DataQI.Commons.Criterions.Support;
+using DataQI.Dapper.FastCrud.Repository;
+using DataQI.Dapper.FastCrud.Repository.Support;
 
-namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
+namespace DataQI.Dapper.FastCrud.Test.Repository.Sample
 {
     public class PersonRepository : DapperRepository<Person> //, IPersonRepository
     {

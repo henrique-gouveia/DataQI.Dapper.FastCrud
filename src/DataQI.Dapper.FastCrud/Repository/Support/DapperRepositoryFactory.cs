@@ -1,8 +1,9 @@
-using System.Data;
 using System;
-using Net.Data.Commons.Repository.Core;
+using System.Data;
 
-namespace Net.Data.Dapper.FastCrud.Repository.Support
+using DataQI.Commons.Repository.Core;
+
+namespace DataQI.Dapper.FastCrud.Repository.Support
 {
     public class DapperRepositoryFactory : RepositoryFactory
     {

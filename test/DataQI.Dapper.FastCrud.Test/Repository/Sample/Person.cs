@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Net.Data.Dapper.FastCrud.Test.Repository.Sample
+namespace DataQI.Dapper.FastCrud.Test.Repository.Sample
 {
     [Table("PERSON")]
     public class Person
