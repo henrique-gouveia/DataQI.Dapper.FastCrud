@@ -26,6 +26,10 @@ personRepository = repositoryFactory.GetRepository<IPersonRepository>();
 
 Visit [Use Default Methods](https://github.com/henrique-gouveia/DataQI.Commons#using-default-methods), [Using Criteria Definitions](https://github.com/henrique-gouveia/DataQI.Commons#using-criteria-definitions) and [Using Query Methods](https://github.com/henrique-gouveia/DataQI.Commons#using-query-methods) for examples to use `personRepository`.
 
+## Limitations and caveats
+
+DataQI is in the experimental phase. It does attempt to solve some problems, but is expected that some improvements turn possible to arrive a stable version.
+
 ## License
 
 DataQI Dapper.FastCrud is released under the [MIT License](https://opensource.org/licenses/MIT).
