@@ -225,14 +225,14 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         }
 
         [Fact]
-        public void TestFindByActiveAndFullNameLike()
+        public void TestFindByFullNameLikeAndActive()
         {
             var personsExpected = InsertTestPersons();
 
             while(personsExpected.MoveNext())
             {
                 var personExpected = personsExpected.Current;
-                var persons = personRepository.FindByActiveAndFullNameLike(personExpected.Active, personExpected.FullName);
+                var persons = personRepository.FindByFullNameLikeAndActive(personExpected.FullName, personExpected.Active);
 
                 personExpected.ToExpectedObject().ShouldMatch(persons.FirstOrDefault());
             }

@@ -9,9 +9,9 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
     {
         IEnumerable<Person> FindByFullName(string fullName);
 
-        IEnumerable<Person> FindByActiveAndFullNameLike(bool active, string name);
+        IEnumerable<Person> FindByFullNameLikeAndActive(string name, bool active = true);
 
-        IEnumerable<Person> FindByEmailLikeAndPhoneIsNotNull(string phone);
+        IEnumerable<Person> FindByEmailLikeAndPhoneIsNotNull(string email);
 
         IEnumerable<Person> FindByDateOfBirthBetween(DateTime startDate, DateTime endDate);
 

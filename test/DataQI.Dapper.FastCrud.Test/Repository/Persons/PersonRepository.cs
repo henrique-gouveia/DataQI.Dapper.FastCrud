@@ -34,16 +34,12 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
             return persons;
         }
 
-        public IEnumerable<Person> FindByActiveAndFullNameLike(bool active, string fullName)
+        public IEnumerable<Person> FindByFullNameLikeAndActive(string fullName, bool active = true)
         {
             var persons = connection
                 .Find<Person>(statement => statement
-                .Where($"{nameof(Person.Active):C} = @active AND {nameof(Person.FullName):C} LIKE @fullName")
-                .WithParameters(new
-                {
-                    active,
-                    fullName
-                }));
+                .Where($"{nameof(Person.FullName):C} LIKE @fullName AND {nameof(Person.Active):C} = @active")
+                .WithParameters(new { fullName, active }));
 
             return persons;
         }
@@ -63,11 +59,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
             var persons = connection
                 .Find<Person>(statement => statement
                 .Where($"{nameof(Person.DateOfBirth):C} BETWEEN @startDate AND @endDate")
-                .WithParameters(new
-                {
-                    startDate,
-                    endDate
-                }));
+                .WithParameters(new { startDate, endDate }));
 
             return persons;
         }
@@ -77,11 +69,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
             var persons = connection
                 .Find<Person>(statement => statement
                 .Where($"{nameof(Person.DateRegister):C} <= @dateRegister OR {nameof(Person.DateOfBirth):C} > @dateOfBirth")
-                .WithParameters(new
-                {
-                    dateRegister,
-                    dateOfBirth
-                }));
+                .WithParameters(new { dateRegister, dateOfBirth }));
 
             return persons;
         }

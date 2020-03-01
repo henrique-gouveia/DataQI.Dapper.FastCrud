@@ -9,10 +9,10 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
 
         IEnumerable<Product> FindByIdOrEanOrReference(int id, string ean, string reference);
 
-        IEnumerable<Product> FindByNameLikeAndStockGreaterThan(string name, decimal stock);
+        IEnumerable<Product> FindByNameLikeAndStockGreaterThan(string name, decimal stock = 0);
 
         IEnumerable<Product> FindByDepartmentInAndNameLike(string[] departments, string name);
         
-        IEnumerable<Product> FindByActiveAndKeywordsLike(bool active, string keywords);
+        IEnumerable<Product> FindByKeywordsLikeAndActive(string keywords, bool active = true);
     }
 }

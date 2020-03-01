@@ -30,7 +30,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
             return products;
         }
 
-        public IEnumerable<Product> FindByNameLikeAndStockGreaterThan(string name, decimal stock)
+        public IEnumerable<Product> FindByNameLikeAndStockGreaterThan(string name, decimal stock = 0)
         {
             var products = connection.Find<Product>(statement => statement
                 .Where($"{nameof(Product.Name):C} LIKE @name AND {nameof(Product.Stock):C} > @stock")
@@ -48,11 +48,11 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
             return products;
         }
 
-        public IEnumerable<Product> FindByActiveAndKeywordsLike(bool active, string keywords)
+        public IEnumerable<Product> FindByKeywordsLikeAndActive(string keywords, bool active = true)
         {
             var products = connection.Find<Product>(statement => statement
-                .Where($"{nameof(Product.Active):C} == @active AND {nameof(Product.Keywords):C} LIKE @keywords")
-                .WithParameters(new { active, keywords }));
+                .Where($"{nameof(Product.Keywords):C} LIKE @keywords AND {nameof(Product.Active):C} == @active")
+                .WithParameters(new { keywords, active }));
 
             return products;
         }

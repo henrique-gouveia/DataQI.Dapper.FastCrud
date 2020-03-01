@@ -95,7 +95,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         }
 
         [Fact]
-        public void TestFindByActiveAndKeywordsLike()
+        public void TestFindByKeywordsLikeAndActive()
         {
             var productList = InsertTestProductsList();
             var productEnumerator = productList.GetEnumerator();
@@ -105,7 +105,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                 var product = productEnumerator.Current;
                 var productsExpected = productList.Where(p => 
                     p.Active == product.Active && p.Keywords.Contains(product.Keywords));
-                var products = productRepository.FindByActiveAndKeywordsLike(product.Active, $"%{product.Keywords}%");
+                var products = productRepository.FindByKeywordsLikeAndActive($"%{product.Keywords}%", product.Active);
 
                 productsExpected.ToExpectedObject().ShouldMatch(products);
             }
