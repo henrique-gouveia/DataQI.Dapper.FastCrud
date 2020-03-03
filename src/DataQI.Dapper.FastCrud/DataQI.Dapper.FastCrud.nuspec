@@ -5,7 +5,7 @@
     <version>1.0.0-preview</version>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <authors>Henrique Gouveia</authors>
-    <owners>Henrique Gouveia</owners>
+    <owners>Henrique Gouveia; Brenno Brandão</owners>
     <licenseUrl>http://www.opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</projectUrl>    
     <description>DataQI.Dapper.FastCrud is a Dapper.FastCrud provider that use infraestructure provided by DataQI.Commons built around essential features of the C# 6 that to makes it easy implement repositories.</description>
