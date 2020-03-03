@@ -1,51 +1,59 @@
 using System;
-using System.ComponentModel.Design;
 using System.Collections.Generic;
 using System.Data;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
 
-using DataQI.Commons.Repository;
 using DataQI.Commons.Criterions;
 using DataQI.Commons.Criterions.Support;
+using DataQI.Commons.Util;
 
 namespace DataQI.Dapper.FastCrud.Repository.Support
 {
-    public class DapperRepository<TEntity> : IDapperRepository<TEntity> 
+    public class DapperRepository<TEntity> : IDapperRepository<TEntity>
         where TEntity : class, new()
     {
         protected IDbConnection connection;
 
         public DapperRepository(IDbConnection connection)
         {
+            Assert.NotNull(connection, "Connection must not be null");
             this.connection = connection;
         }
 
         public void Delete(TEntity entity)
         {
+            Assert.NotNull(entity, "Entity must not be null");
             connection.Delete(entity);
         }
 
         public async Task DeleteAsync(TEntity entity)
         {
+            Assert.NotNull(entity, "Entity must not be null");
             await connection.DeleteAsync(entity);
         }
 
         public bool Exists(TEntity id)
         {
+            Assert.NotNull(id, "Id must not be null");
+
             var entity = FindOne(id);
             return entity != null;
         }
 
         public async Task<bool> ExistsAsync(TEntity id)
         {
+            Assert.NotNull(id, "Id must not be null");
+
             var entity = await FindOneAsync(id);
             return entity != null;
         }
 
         public IEnumerable<TEntity> Find(Func<ICriteria, ICriteria> criteriaBuilder)
         {
+            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
+
             var criteria = criteriaBuilder(new Criteria());
 
             var entities = connection.Find<TEntity>(statement => statement
@@ -57,12 +65,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
 
         public async Task<IEnumerable<TEntity>> FindAsync(Func<ICriteria, ICriteria> criteriaBuilder)
         {
+            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
+
             var criteria = criteriaBuilder(new Criteria());
 
             var entities = await connection.FindAsync<TEntity>(statement => statement
                 .Where($"{criteria.ToSqlString()}")
                 .WithParameters(criteria.Parameters));
-            
+
             return entities;
         }
 
@@ -71,7 +81,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var entities = connection.Find<TEntity>();
             return entities;
         }
-        
+
         public async Task<IEnumerable<TEntity>> FindAllAsync()
         {
             var entities = await connection.FindAsync<TEntity>();
@@ -80,27 +90,35 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
 
         public TEntity FindOne(TEntity id)
         {
+            Assert.NotNull(id, "Id must not be null");
+
             var entity = connection.Get(id);
             return entity;
         }
         public async Task<TEntity> FindOneAsync(TEntity id)
         {
+            Assert.NotNull(id, "Id must not be null");
+
             var entity = await connection.GetAsync(id);
             return entity;
         }
 
         public void Insert(TEntity entity)
         {
+            Assert.NotNull(entity, "Entity must not be null");
             connection.Insert(entity);
         }
 
         public async Task InsertAsync(TEntity entity)
         {
+            Assert.NotNull(entity, "Entity must not be null");
             await connection.InsertAsync(entity);
         }
 
         public void Save(TEntity entity)
         {
+            Assert.NotNull(entity, "Entity must not be null");
+
             if (Exists(entity))
                 connection.Update(entity);
             else
@@ -109,10 +127,34 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
 
         public async Task SaveAsync(TEntity entity)
         {
+            Assert.NotNull(entity, "Entity must not be null");
+
             if (await ExistsAsync(entity))
                 await connection.UpdateAsync(entity);
             else
                 await InsertAsync(entity);
         }
+
+        #region IDisposable Support
+        private bool disposedValue = false; // Para detectar chamadas redundantes
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    connection?.Dispose();
+                    connection = null;
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+        #endregion
     }
 }

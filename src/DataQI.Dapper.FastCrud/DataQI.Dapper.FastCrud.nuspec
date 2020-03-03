@@ -8,7 +8,7 @@
     <owners>Henrique Gouveia</owners>
     <licenseUrl>http://www.opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</projectUrl>    
-    <description>DataQI.Dapper.FastCrud is a Dapper.FastCrud provider that use infraestructure provided by DataQI.Commons built around essential features of the C# 6 / VB that to makes it easy implement repositories.</description>
+    <description>DataQI.Dapper.FastCrud is a Dapper.FastCrud provider that use infraestructure provided by DataQI.Commons built around essential features of the C# 6 that to makes it easy implement repositories.</description>
     <dependencies>
       <group targetFramework=".NETStandard2.0">
         <dependency id="Dapper.FastCrud" version="2.5.0.39" />

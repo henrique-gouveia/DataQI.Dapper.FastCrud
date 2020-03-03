@@ -18,9 +18,7 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
         public DbFixture()
         {
             OrmConfiguration.DefaultDialect = SqlDialect.SqLite;
-
-            Connection = new SQLiteConnection("Data Source=:memory:");
-            Connection.Open();
+            Connection = CreateConnection();
 
             // 1.
             // PersonRepository = new PersonRepository(Connection);
@@ -32,6 +30,14 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             ProductRepository = repositoryFactory.GetRepository<IProductRepository>();
 
             CreateTables();
+        }
+
+        private IDbConnection CreateConnection() 
+        {
+            var connection = new SQLiteConnection("Data Source=:memory:");
+            connection.Open();
+
+            return connection;
         }
 
         private void CreateTables()

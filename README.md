@@ -1,6 +1,6 @@
 # DataQI Dapper.FastCrud [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
 
-DataQI.Dapper.FastCrud is a [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) provider that use infraestructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) built around essential features of the C# 6 / VB that to makes it easy implement repositories.
+DataQI.Dapper.FastCrud is a [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) provider that use infraestructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) built around essential features of the C# 6 that to makes it easy implement repositories.
 
 ## Getting Started
 
@@ -28,7 +28,14 @@ Visit [Use Default Methods](https://github.com/henrique-gouveia/DataQI.Commons#u
 
 ## Limitations and caveats
 
-DataQI is in the experimental phase. It does attempt to solve some problems, but is expected that some improvements turn possible to arrive a stable version.
+DataQI does attempt to solve some problems. It is in the experimental phase.
+
+## Contributors
+
+* Henrique Gouveia
+* Brenno Brandãogit add
+
+A [recent list of contributors](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/graphs/contributors) can always be obtained on GitHub.
 
 ## License
 
