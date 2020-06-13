@@ -13,22 +13,12 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
         {
 
         }
-
-        // Aqui, temos pelos menos 2 formas diferentes de implementar...
-        // 1. Customizando um statement, por exemplo, "SELECT * FROM PERSON WHERE FULL_NAME = ?"
-        //
-        //   1.1.1 "?" poderia ser substituído por concatenação possibilitando SQL INJECTION, "... FULL_NAME = " + fullName
-        //   1.1.2 "?" poderia ser utilizado como um parâmetro, por exemplo, "... FULL_NAME = @NAME"
-        //   1.1.3 Outro problema explicito é o acoplamento rigido com o metadados especifico do banco, inclusive detalhes
-        //         especificos de cada banco para prover uma paginação, por exemplo.
-        //
-        // 2. A segunda, seria utilizar o parâmetro statementOptions, porém ainda existirá a necessidade do acoplamento
-        //    com o metadados especifico do banco, no caso, com o nome de cada respectiva coluna no banco de dados.
+        
         public IEnumerable<Person> FindByFullName(string fullName)
         {
             var persons = connection
                     .Find<Person>(statement => statement
-                    .Where($"{nameof(Person.FullName):C} = @fullName")
+                    .Where($"({nameof(Person.FullName):C} = @fullName)")
                     .WithParameters(new { fullName }));
 
             return persons;
@@ -38,7 +28,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
         {
             var persons = connection
                 .Find<Person>(statement => statement
-                .Where($"{nameof(Person.FullName):C} LIKE @fullName AND {nameof(Person.Active):C} = @active")
+                .Where($"({nameof(Person.FullName):C} LIKE @fullName AND {nameof(Person.Active):C} = @active)")
                 .WithParameters(new { fullName, active }));
 
             return persons;
@@ -48,7 +38,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
         {
             var persons = connection
                 .Find<Person>(statement => statement
-                .Where($"{nameof(Person.Email):C} LIKE @email AND {nameof(Person.Phone):C} IS NOT NULL")
+                .Where($"({nameof(Person.Email):C} LIKE @email AND {nameof(Person.Phone):C} IS NOT NULL)")
                 .WithParameters(new { email }));
 
             return persons;
@@ -58,7 +48,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
         {
             var persons = connection
                 .Find<Person>(statement => statement
-                .Where($"{nameof(Person.DateOfBirth):C} BETWEEN @startDate AND @endDate")
+                .Where($"({nameof(Person.DateOfBirth):C} BETWEEN @startDate AND @endDate)")
                 .WithParameters(new { startDate, endDate }));
 
             return persons;
@@ -68,7 +58,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
         {
             var persons = connection
                 .Find<Person>(statement => statement
-                .Where($"{nameof(Person.DateRegister):C} <= @dateRegister OR {nameof(Person.DateOfBirth):C} > @dateOfBirth")
+                .Where($"({nameof(Person.DateRegister):C} <= @dateRegister) OR ({nameof(Person.DateOfBirth):C} > @dateOfBirth)")
                 .WithParameters(new { dateRegister, dateOfBirth }));
 
             return persons;

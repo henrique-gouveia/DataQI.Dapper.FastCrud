@@ -20,11 +20,11 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             OrmConfiguration.DefaultDialect = SqlDialect.SqLite;
             Connection = CreateConnection();
 
-            // 1.
+            // 1. Default
             // PersonRepository = new PersonRepository(Connection);
             // ProductRepository = new ProductRepository(Connection);
 
-            // 2.
+            // 2. Provided
             var repositoryFactory = new DapperRepositoryFactory(Connection);
             PersonRepository = repositoryFactory.GetRepository<IPersonRepository>();
             ProductRepository = repositoryFactory.GetRepository<IProductRepository>();
