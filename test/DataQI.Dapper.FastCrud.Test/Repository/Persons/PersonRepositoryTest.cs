@@ -53,12 +53,13 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
 
             var personInserted = PersonBuilder.NewInstance().Build();
             SavePerson(personInserted, useAsyncMethod);
-            Assert.True(personInserted.Id > 0);
-            Assert.Equal(countExpected, connection.Count<Person>());
 
             var personUpdated = PersonBuilder.NewInstance().SetId(personInserted.Id).Build();
             SavePerson(personUpdated, useAsyncMethod);
-            Assert.Equal(personInserted.Id, personUpdated.Id);
+
+            var personFinded = connection.Get<Person>(personUpdated);
+
+            personUpdated.ToExpectedObject().ShouldMatch(personFinded);
             Assert.Equal(countExpected, connection.Count<Person>());
         }
 
@@ -174,42 +175,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                 Assert.Null(FindOnePerson(person, useAsyncMethod));
             }
         }
-
-        // 1. Quando desejo criar uma busca por outra propriedade tenho que implementar, porém cada desenvolvedor,
-        //    de acordo com sua experiência, de uma forma, exemplo:
-        //
-        //    1.1. Estende a classe DapperRepository, porém instancia a classe concreta;
-        //
-        //         public class PersonRepository : DapperRepository<Person>
-        //         {
-        //             public Person FindByFullName(string fullName) { ... }
-        //         }
-        //
-        //         PersonRepository personRepository = new PersonRepository(connection);
-        //         personRepository.FindByName("FIRSTNAME LASTNAME");
-        //
-        //    1.2. Estende a classe DapperRepository, porém realiza um cast quando necessário utilizar o método
-        //         desejado;
-        //
-        //         public class PersonRepository : DapperRepository<Person>
-        //         {
-        //             public Person FindByFullName(string fullName) { ... }
-        //         }
-        //
-        //         IDapperRepository<Person> personRepository = new PersonRepository(connection);
-        //         ((PersonRepository)personRepository).FindByName("FIRSTNAME LASTNAME");
-        //
-        //    1.3. Cria uma interface IPersonRepository e define a classe PersonRepository que a implemente
-        //
-        //         public class PersonRepository : DapperRepository<Person>, IPersonRepository
-        //         {
-        //             public Person FindByFullName(string fullName) { ... }
-        //         }
-        //
-        //         IPersonRepository personRepository = new PersonRepository(connection);
-        //         personRepository.FindByName("FIRSTNAME LASTNAME");
-        //
-
+        
         [Fact]
         public void TestFindByFullName()
         {
@@ -232,7 +198,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             while(personsExpected.MoveNext())
             {
                 var personExpected = personsExpected.Current;
-                var persons = personRepository.FindByFullNameLikeAndActive(personExpected.FullName, personExpected.Active);
+                var persons = personRepository.FindByFullNameLikeAndActive($"{personExpected.FullName}%", personExpected.Active);
 
                 personExpected.ToExpectedObject().ShouldMatch(persons.FirstOrDefault());
             }
