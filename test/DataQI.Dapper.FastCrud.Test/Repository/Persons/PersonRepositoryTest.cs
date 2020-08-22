@@ -205,14 +205,14 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         }
 
         [Fact]
-        public void TestFindByEmailLikeAndPhoneIsNotNull()
+        public void TestFindByEmailLikeAndPhoneNotNull()
         {
             var personsExpected = InsertTestPersons();
 
             while(personsExpected.MoveNext())
             {
                 var personExpected = personsExpected.Current;
-                var persons = personRepository.FindByEmailLikeAndPhoneIsNotNull($"%{personExpected.Email}");
+                var persons = personRepository.FindByEmailLikeAndPhoneNotNull($"%{personExpected.Email}");
 
                 personExpected.ToExpectedObject().ShouldMatch(persons.FirstOrDefault());
             }
