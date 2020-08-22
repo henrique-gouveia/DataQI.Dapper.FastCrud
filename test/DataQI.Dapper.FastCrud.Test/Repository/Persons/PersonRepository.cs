@@ -34,7 +34,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Persons
             return persons;
         }
 
-        public IEnumerable<Person> FindByEmailLikeAndPhoneIsNotNull(string email)
+        public IEnumerable<Person> FindByEmailLikeAndPhoneNotNull(string email)
         {
             var persons = connection
                 .Find<Person>(statement => statement
