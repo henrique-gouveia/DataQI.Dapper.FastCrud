@@ -32,7 +32,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         [Fact]
-        public void TestBuildNullExpressionCorrectly()
+        public void TestBuildInExpressionCorrectly()
         {
             var criterion = Restrictions.In("FirstName", new string[] { "Fake Name A", "Fake Name B", "Fake Name C" });
             Assert.Equal("FirstName In @0", criterion.GetExpressionBuilder().Build(commandBuilder));

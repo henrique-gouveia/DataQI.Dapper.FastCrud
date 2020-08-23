@@ -75,7 +75,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             Assert.Equal("(FirstName = @0)", junction.GetExpressionBuilder().Build(commandBuilder));
         }
 
-
         [Fact]
         public void TestBuildDisjunctionComposedExpressionsCorrectly()
         {
