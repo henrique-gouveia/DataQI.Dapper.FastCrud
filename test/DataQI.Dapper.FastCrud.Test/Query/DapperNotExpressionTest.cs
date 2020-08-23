@@ -19,11 +19,11 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         {
             commandBuilder = fixture.GetCommandBuilder();
         }
-        
+
         [Fact]
         public void TestRejectsNullCriterion()
         {
-            var exception = Assert.Throws<ArgumentException>(() => 
+            var exception = Assert.Throws<ArgumentException>(() =>
                 new DapperNotExpression(null));
             var exceptionMessage = exception.GetBaseException().Message;
 
@@ -38,24 +38,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var notBetween = Restrictions.Not(between);
 
             Assert.Equal("DateOfBirth Not Between @0 And @1", notBetween.GetExpressionBuilder().Build(commandBuilder));
-        }        
-
-        [Fact]
-        public void TestBuildNotContainingExpressionCorrectly()
-        {
-            var containing = Restrictions.Containing("FirstName", "Fake Name");
-            var notContaining = Restrictions.Not(containing);
-
-            Assert.Equal("FirstName Not Like @0", notContaining.GetExpressionBuilder().Build(commandBuilder));
-        }
-
-        [Fact]
-        public void TestBuildNotEndingWithExpressionCorrectly()
-        {
-            var endingWith = Restrictions.EndingWith("LastName", "Fake Name");
-            var notEndingWith = Restrictions.Not(endingWith);
-
-            Assert.Equal("LastName Not Like @0", notEndingWith.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -68,13 +50,40 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         [Fact]
+        public void TestBuildNotEndingWithExpressionCorrectly()
+        {
+            var endingWith = Restrictions.EndingWith("LastName", "Fake Name");
+            var notEndingWith = Restrictions.Not(endingWith);
+
+            Assert.Equal("LastName Not Like @0", notEndingWith.GetExpressionBuilder().Build(commandBuilder));
+        }
+
+        [Fact]
+        public void TestBuildNotContainingExpressionCorrectly()
+        {
+            var containing = Restrictions.Containing("FirstName", "Fake Name");
+            var notContaining = Restrictions.Not(containing);
+
+            Assert.Equal("FirstName Not Like @0", notContaining.GetExpressionBuilder().Build(commandBuilder));
+        }
+
+        [Fact]
+        public void TestBuildNotLikeExpressionCorrectly()
+        {
+            var containing = Restrictions.Like("FirstName", "Fake Name");
+            var notContaining = Restrictions.Not(containing);
+
+            Assert.Equal("FirstName Not Like @0", notContaining.GetExpressionBuilder().Build(commandBuilder));
+        }
+
+        [Fact]
         public void TestBuildNotEqualExpressionCorrectly()
         {
             var equal = Restrictions.Equal("FirstName", "Fake Name");
             var notEqual = Restrictions.Not(equal);
 
             Assert.Equal("FirstName != @0", notEqual.GetExpressionBuilder().Build(commandBuilder));
-        }        
+        }
 
         [Fact]
         public void TestBuildNotInExpressionCorrectly()
@@ -83,6 +92,15 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var notIn = Restrictions.Not(In);
 
             Assert.Equal("FirstName Not In @0", notIn.GetExpressionBuilder().Build(commandBuilder));
-        }        
+        }
+
+        [Fact]
+        public void TestBuildNotNullExpressionCorrectly()
+        {
+            var Null = Restrictions.Null("Email");
+            var notIn = Restrictions.Not(Null);
+
+            Assert.Equal("Email Is Not Null", notIn.GetExpressionBuilder().Build(commandBuilder));
+        }
     }
 }

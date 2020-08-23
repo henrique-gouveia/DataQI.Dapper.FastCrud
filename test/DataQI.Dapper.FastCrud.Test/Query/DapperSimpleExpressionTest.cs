@@ -23,12 +23,26 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         [Fact]
         public void TestRejectsNullCriterion()
         {
-            var exception = Assert.Throws<ArgumentException>(() => 
+            var exception = Assert.Throws<ArgumentException>(() =>
                 new DapperSimpleExpression(null));
             var exceptionMessage = exception.GetBaseException().Message;
 
             Assert.IsType<ArgumentException>(exception.GetBaseException());
             Assert.Equal("SimpleExpression must not be null", exceptionMessage);
+        }
+
+        [Fact]
+        public void TestBuildEqualExpressionCorrectly()
+        {
+            var criterion = Restrictions.Equal("FirstName", "Fake Name");
+            Assert.Equal("FirstName = @0", criterion.GetExpressionBuilder().Build(commandBuilder));
+        }
+
+        [Fact]
+        public void TestBuildLikeExpressionCorrectly()
+        {
+            var criterion = Restrictions.Like("FirstName", "Fake Name");
+            Assert.Equal("FirstName Like @0", criterion.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -39,17 +53,17 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         [Fact]
-        public void TestBuildEndingWithExpressionCorrectly()
+        public void TestBuildStartingWithExpressionCorrectly()
         {
-            var criterion = Restrictions.EndingWith("LastName", "Fake Name");
+            var criterion = Restrictions.StartingWith("LastName", "Fake Name");
             Assert.Equal("LastName Like @0", criterion.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
-        public void TestBuildEqualExpressionCorrectly()
+        public void TestBuildEndingWithExpressionCorrectly()
         {
-            var criterion = Restrictions.Equal("FirstName", "Fake Name");
-            Assert.Equal("FirstName = @0", criterion.GetExpressionBuilder().Build(commandBuilder));
+            var criterion = Restrictions.EndingWith("LastName", "Fake Name");
+            Assert.Equal("LastName Like @0", criterion.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -78,13 +92,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         {
             var criterion = Restrictions.LessThanEqual("Age", 20);
             Assert.Equal("Age <= @0", criterion.GetExpressionBuilder().Build(commandBuilder));
-        }
-
-        [Fact]
-        public void TestBuildLikeExpressionCorrectly()
-        {
-            var criterion = Restrictions.Like("FirstName", "Fake Name");
-            Assert.Equal("FirstName Like @0", criterion.GetExpressionBuilder().Build(commandBuilder));
         }
     }
 }
