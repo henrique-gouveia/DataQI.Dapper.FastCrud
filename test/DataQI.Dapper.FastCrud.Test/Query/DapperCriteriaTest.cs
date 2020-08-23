@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 
 using DataQI.Commons.Query.Support;
-using DataQI.Dapper.FastCrud.Query;
 using DataQI.Dapper.FastCrud.Query.Support;
 
 using Xunit;
@@ -40,7 +39,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             criteria.Add(firstNameCriterion);
             var command = criteria.BuildCommand();
 
-            AssertCommand(command, "FirstName = @0", findByParametersExpected);
+            AssertCommand("FirstName = @0", findByParametersExpected, command);
         }
 
         [Fact]
@@ -60,7 +59,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .Add(lastNameCriterion);
             var command = criteria.BuildCommand();
 
-            AssertCommand(command, "FirstName = @0 AND LastName = @1", findByParametersExpected);
+            AssertCommand("FirstName = @0 AND LastName = @1", findByParametersExpected, command);
         }
 
         [Fact]
@@ -76,7 +75,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             criteria.Add(junction);
             var command = criteria.BuildCommand();
 
-            AssertCommand(command, "(FirstName = @0)", findByParametersExpected);
+            AssertCommand("(FirstName = @0)", findByParametersExpected, command);
         }
 
         [Fact]
@@ -92,7 +91,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             criteria.Add(junction);
             var command = criteria.BuildCommand();
 
-            AssertCommand(command, "(FirstName = @0)", findByParametersExpected);
+            AssertCommand("(FirstName = @0)", findByParametersExpected, command);
         }
 
         [Fact]
@@ -118,7 +117,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             criteria.Add(junction1).Add(junction2);
             var command = criteria.BuildCommand();
 
-            AssertCommand(command, "(FirstName = @0) AND (LastName = @1)", findByParametersExpected);
+            AssertCommand("(FirstName = @0) AND (LastName = @1)", findByParametersExpected, command);
         }
 
         [Fact]
@@ -144,7 +143,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             criteria.Add(junction1).Add(junction2);
             var command = criteria.BuildCommand();
 
-            AssertCommand(command, "(FirstName = @0) AND (LastName = @1)", findByParametersExpected);
+            AssertCommand("(FirstName = @0) AND (LastName = @1)", findByParametersExpected, command);
         }        
     }
 }
