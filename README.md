@@ -1,6 +1,6 @@
 # DataQI Dapper.FastCrud [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
 
-Data Query Interface .NET it's [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) provider is written in C# and built around essential features of the .NET Standard that uses infrastructure ovided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers making possible the definition repository interfaces, providing behaviors for standard operations as well to defines customized queries through method signatures.
+Data Query Interface .NET it's [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) provider is written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers making possible the definition repository interfaces, providing behaviors for standard operations as well to defines customized queries through method signatures.
 
 ## Getting Started
 
