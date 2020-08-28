@@ -1,13 +1,13 @@
 using System.Data;
 
-namespace Net.Data.Dapper.Test.Extensions
+namespace DataQI.Dapper.FastCrud.Test.Extensions
 {
     public static class DbCommandExtensions
     {
         public static IDbCommand AddCommandText(this IDbCommand command, string commandText)
         {
             if (!string.IsNullOrEmpty(commandText))
-                command.CommandText = commandText;
+                command.CommandText = $"{command.CommandText} {commandText}";
 
             return command;
         }
