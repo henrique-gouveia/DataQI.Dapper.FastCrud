@@ -5,9 +5,10 @@ using System.Threading.Tasks;
 
 using Dapper.FastCrud;
 
-using DataQI.Commons.Criterions;
-using DataQI.Commons.Criterions.Support;
+using DataQI.Commons.Query;
 using DataQI.Commons.Util;
+
+using DataQI.Dapper.FastCrud.Query.Support;
 
 namespace DataQI.Dapper.FastCrud.Repository.Support
 {
@@ -54,11 +55,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         {
             Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
 
-            var criteria = criteriaBuilder(new Criteria());
+            var criteria = new DapperCriteria();
+            criteriaBuilder(criteria);
+
+            var dapperCommand = criteria.BuildCommand();
 
             var entities = connection.Find<TEntity>(statement => statement
-                .Where($"{criteria.ToSqlString()}")
-                .WithParameters(criteria.Parameters));
+                .Where($"{dapperCommand.Command}")
+                .WithParameters(dapperCommand.Values));
 
             return entities;
         }
@@ -67,11 +71,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         {
             Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
 
-            var criteria = criteriaBuilder(new Criteria());
+            var criteria = new DapperCriteria();
+            criteriaBuilder(criteria);
+
+            var dapperCommand = criteria.BuildCommand();
 
             var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where($"{criteria.ToSqlString()}")
-                .WithParameters(criteria.Parameters));
+                .Where($"{dapperCommand.Command}")
+                .WithParameters(dapperCommand.Values));
 
             return entities;
         }
@@ -136,7 +143,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         }
 
         #region IDisposable Support
-        private bool disposedValue = false; // Para detectar chamadas redundantes
+        private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
         {
