@@ -1,6 +1,6 @@
 # DataQI Dapper.FastCrud [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
 
-Data Query Interface .NET it's [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) provider is written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers making possible the definition repository interfaces, providing behaviors for standard operations as well to defines customized queries through method signatures.
+Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers making possible the definition repository interfaces, providing behaviors for standard operations as well to defines customized queries through method signatures.
 
 ## Getting Started
 
@@ -117,8 +117,8 @@ Customized Queries can be defined through method signatures with the following c
 |-------------|------------|-------------
 | **Equal** | FindByName, FindByName**Equal** | where Name **=** @0
 | **NotEqual** | FindByName**Not**, FindByName**NotEqual** | where Name **<>** @0
-| **Between** | FindByDateOfBirth**Between** | where DateOfBirth **between** @0 **and** @1
-| **NotBetween** | FindByDateOfBirth**NotBetween** | where DateOfBirth **not between** @0 **and** @1
+| **Between** | FindByAge**Between** | where Age **between** @0 **and** @1
+| **NotBetween** | FindByAge**NotBetween** | where Age **not between** @0 **and** @1
 | **GreaterThan** | FindByDateOfBirth**GreaterThan** | where DateOfBirth **>** @0
 | **GreaterThanEqual** | FindByDateOfBirth**GreaterThanEqual** | where DateOfBirth **>=** @0
 | **LessThan** | FindByDateOfBirth**LessThan** | where DateOfBirth **<** @0
