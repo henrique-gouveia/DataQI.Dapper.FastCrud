@@ -1,0 +1,22 @@
+version: 1.0.{build}
+image: Visual Studio 2019
+# branches:
+#   only:
+#     - master
+#     - develop
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+before_build:
+- ps: |
+    choco install opencover.portable --no-progress
+    choco install codecov --no-progress
+    dotnet restore
+    dotnet build
+build:
+  verbosity: minimal
+after_test:
+  - OpenCover.Console.exe -register:user -target:"C:/Program Files/dotnet/dotnet.exe" -targetargs:test -filter:"+[DataQI.Dapper.FastCrud*]* -[DataQI.Dapper.FastCrud.Test*]*" -output:".\DataQI_Dapper_FastCrud_Coverage.xml" -oldstyle
+  - codecov -f "DataQI_Dapper_FastCrud_Coverage.xml" -t $env:CODECOV_TOKEN
