@@ -1,5 +1,5 @@
 using System;
-
+using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Query;
@@ -11,7 +11,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperBetweenExpressionTest : IClassFixture<QueryFixture>
+    public class DapperBetweenExpressionTest : DapperExpressionTestBase, IClassFixture<QueryFixture>
     {
         private readonly IDapperCommandBuilder commandBuilder;
 
@@ -35,7 +35,10 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestBuildBetweenExpressionCorrectly()
         {
             var criterion = Restrictions.Between("DateOfBirth", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1));
-            Assert.Equal("DateOfBirth Between @0 And @1", criterion.GetExpressionBuilder().Build(commandBuilder));
-        }        
+
+            AssertExpression(
+                $"{Sql.Column("DateOfBirth")} Between @{"0"} And @{"1"}",
+                criterion.GetExpressionBuilder().Build(commandBuilder));
+        }
     }
 }

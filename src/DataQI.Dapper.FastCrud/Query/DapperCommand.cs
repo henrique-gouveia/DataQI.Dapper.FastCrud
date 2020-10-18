@@ -1,14 +1,16 @@
+using System;
+
 namespace DataQI.Dapper.FastCrud.Query
 {
     public struct DapperCommand
     {
-        public DapperCommand(string command, object values)
+        public DapperCommand(FormattableString command, object values)
         {
             Command = command;
-            Values = values;   
+            Values = values;
         }
 
-        public string Command { get; private set; }
+        public FormattableString Command { get; set; }
 
         public object Values { get; private set; }
     }

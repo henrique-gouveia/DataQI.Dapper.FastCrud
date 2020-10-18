@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
-
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
 
@@ -18,39 +20,51 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             this.junction = junction;
         }
 
-        public string Build(IDapperCommandBuilder commandBuilder)
+        public FormattableString Build(IDapperCommandBuilder commandBuilder)
         {
-            var sqlWhereBuilder = new StringBuilder();
-            var expressionsNumerator = BuildExpressionsBuilder().GetEnumerator();
+            var expressions = BuildExpressions(commandBuilder);
+            var junctionFormat = BuildFormat(expressions.GetEnumerator());
 
-            while (expressionsNumerator.MoveNext())
-            {
-                if (sqlWhereBuilder.Length > 0)
-                    sqlWhereBuilder.Append(junction.GetLogicalOperator());
-
-                var expressionBuilder = expressionsNumerator.Current;
-                sqlWhereBuilder.Append(expressionBuilder.Build(commandBuilder));
-            }
-
-            return string.Format(
-                junction.GetCommandTemplate(), 
-                sqlWhereBuilder.ToString());
+            return FormattableStringFactory.Create(
+                junctionFormat, 
+                expressions.ToArray());
         }
 
-        private IReadOnlyCollection<IDapperExpressionBuilder> BuildExpressionsBuilder()
+        // TODO: Duplicated on DapperCommandBuilder
+        private IReadOnlyCollection<FormattableString> BuildExpressions(IDapperCommandBuilder commandBuilder)
         {
             var criterionsEnumerator = junction.Criterions.GetEnumerator();
-            var expressions = new List<IDapperExpressionBuilder>();
+            var expressions = new List<FormattableString>();
 
-            while (criterionsEnumerator.MoveNext()) 
+            while (criterionsEnumerator.MoveNext())
             {
                 var criterion = criterionsEnumerator.Current;
-               
+
                 IDapperExpressionBuilder builder = criterion.GetExpressionBuilder();
-                expressions.Add(builder);
+                expressions.Add(builder.Build(commandBuilder));
             }
 
-            return expressions;       
+            return expressions;
+        }
+
+        // TODO: Duplicated on DapperCommandBuilder
+        private string BuildFormat(IEnumerator<FormattableString> expressions)
+        {
+            var expressionIndex = 0;
+            var formatBuilder = new StringBuilder();
+
+            formatBuilder.Append("(");
+            while (expressions.MoveNext())
+            {
+                if (expressionIndex > 0)
+                    formatBuilder.Append(junction.GetLogicalOperator());
+
+                formatBuilder.AppendFormat("{{{0}}}", expressionIndex);
+                expressionIndex++;
+            }
+            formatBuilder.Append(")");
+
+            return formatBuilder.ToString();
         }
     }
 }

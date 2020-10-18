@@ -1,5 +1,5 @@
 using System;
-
+using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Query;
@@ -11,7 +11,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperJunctionExpressionTest : IClassFixture<QueryFixture>
+    public class DapperJunctionExpressionTest : DapperExpressionTestBase, IClassFixture<QueryFixture>
     {
         private readonly IDapperCommandBuilder commandBuilder;
 
@@ -37,7 +37,11 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var junction = Restrictions.Conjunction();
             junction.Add(Restrictions.Equal("FirstName", "Fake Name"));
 
-            Assert.Equal("(FirstName = @0)", junction.GetExpressionBuilder().Build(commandBuilder));
+            FormattableString expression = $"{Sql.Column("FirstName")} = @{"0"}";
+
+            AssertExpression(
+                $"({expression})",
+                junction.GetExpressionBuilder().Build(commandBuilder));
         }        
 
         [Fact]
@@ -48,7 +52,12 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .Add(Restrictions.Equal("FirstName", "Fake Name"))
                 .Add(Restrictions.Equal("LastName", "Fake Name"));
 
-            Assert.Equal("(FirstName = @0 AND LastName = @1)", junction.GetExpressionBuilder().Build(commandBuilder));
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+
+            AssertExpression(
+                $"({firstExpression} AND {secondExpression})", 
+                junction.GetExpressionBuilder().Build(commandBuilder));
         }
  
         [Fact]
@@ -63,7 +72,15 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                     .Conjunction()
                     .Add(Restrictions.Equal("LastName", "Fake Name")));
 
-            Assert.Equal("((FirstName = @0) AND (LastName = @1))", junction.GetExpressionBuilder().Build(commandBuilder));
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString firstJunctionExpression = $"({firstExpression})";
+
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+            FormattableString secondJunctionExpression = $"({secondExpression})";
+
+            AssertExpression(
+                $"({firstJunctionExpression} AND {secondJunctionExpression})",
+                junction.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -72,7 +89,11 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var junction = Restrictions.Disjunction();
             junction.Add(Restrictions.Equal("FirstName", "Fake Name"));
 
-            Assert.Equal("(FirstName = @0)", junction.GetExpressionBuilder().Build(commandBuilder));
+            FormattableString expression = $"{Sql.Column("FirstName")} = @{"0"}";
+
+            AssertExpression(
+                $"({expression})",
+                junction.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -83,7 +104,12 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .Add(Restrictions.Equal("FirstName", "Fake Name"))
                 .Add(Restrictions.Equal("LastName", "Fake Name"));
 
-            Assert.Equal("(FirstName = @0 OR LastName = @1)", junction.GetExpressionBuilder().Build(commandBuilder));
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+
+            AssertExpression(
+                $"({firstExpression} OR {secondExpression})",
+                junction.GetExpressionBuilder().Build(commandBuilder));
         }        
  
         [Fact]
@@ -98,7 +124,15 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                     .Disjunction()
                     .Add(Restrictions.Equal("LastName", "Fake Name")));
 
-            Assert.Equal("((FirstName = @0) OR (LastName = @1))", junction.GetExpressionBuilder().Build(commandBuilder));
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString firstJunctionExpression = $"({firstExpression})";
+
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+            FormattableString secondJunctionExpression = $"({secondExpression})";
+
+            AssertExpression(
+                $"({firstJunctionExpression} OR {secondJunctionExpression})",
+                junction.GetExpressionBuilder().Build(commandBuilder));
         }
     }
 }
