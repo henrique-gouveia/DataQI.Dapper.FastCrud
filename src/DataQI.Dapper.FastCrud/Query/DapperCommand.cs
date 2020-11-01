@@ -10,7 +10,7 @@ namespace DataQI.Dapper.FastCrud.Query
             Values = values;
         }
 
-        public FormattableString Command { get; set; }
+        public FormattableString Command { get; private set; }
 
         public object Values { get; private set; }
     }
