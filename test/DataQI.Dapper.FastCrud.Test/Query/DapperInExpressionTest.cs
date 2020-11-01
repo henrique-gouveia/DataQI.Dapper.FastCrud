@@ -1,5 +1,5 @@
 using System;
-
+using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Query;
@@ -11,7 +11,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperInExpressionTest : IClassFixture<QueryFixture>
+    public class DapperInExpressionTest : DapperExpressionTestBase, IClassFixture<QueryFixture>
     {
         private readonly IDapperCommandBuilder commandBuilder;
 
@@ -35,7 +35,10 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestBuildInExpressionCorrectly()
         {
             var criterion = Restrictions.In("FirstName", new string[] { "Fake Name A", "Fake Name B", "Fake Name C" });
-            Assert.Equal("FirstName In @0", criterion.GetExpressionBuilder().Build(commandBuilder));
+
+            AssertExpression(
+                $"{Sql.Column("FirstName")} In @{"0"}",
+                criterion.GetExpressionBuilder().Build(commandBuilder));
         }  
     }
 }

@@ -1,3 +1,8 @@
+using System;
+using System.Runtime.CompilerServices;
+
+using Dapper.FastCrud;
+
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
 using DataQI.Dapper.FastCrud.Query.Extensions;
@@ -14,13 +19,15 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             this.inExpression = inExpression;
         }
 
-        public string Build(IDapperCommandBuilder commandBuilder)
+        public FormattableString Build(IDapperCommandBuilder commandBuilder)
         {
-            var parameterName = commandBuilder.AddExpressionValue(inExpression.Values);
+            string commandTemplate = inExpression.GetCommandTemplate();
+            IFormattable columnName = Sql.Column(inExpression.GetPropertyName());
+            string parameterName = commandBuilder.AddExpressionValue(inExpression.Values);
 
-            return string.Format(
-                inExpression.GetCommandTemplate(), 
-                inExpression.GetPropertyName(), 
+            return FormattableStringFactory.Create(
+                commandTemplate,
+                columnName,
                 parameterName);
         }
     }

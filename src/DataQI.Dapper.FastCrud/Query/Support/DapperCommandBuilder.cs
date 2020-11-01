@@ -1,24 +1,25 @@
-using System.Dynamic;
-using System.Text;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.Dynamic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace DataQI.Dapper.FastCrud.Query.Support
 {
-    public class DapperCommandBuilder : IDapperCommandBuilder
+    public class DapperCommandBuilder : DapperExpressionBuilder, IDapperCommandBuilder
     {
-        private readonly ICollection<IDapperExpressionBuilder> expressions;
+        private readonly ICollection<IDapperExpressionBuilder> expressionBuilders;
         private readonly dynamic values;
 
         public DapperCommandBuilder()
         {
-            this.expressions = new List<IDapperExpressionBuilder>();
+            this.expressionBuilders = new List<IDapperExpressionBuilder>();
             this.values = new ExpandoObject();
         }
 
         public IDapperCommandBuilder AddExpression(IDapperExpressionBuilder expression)
         {
-            expressions.Add(expression);
+            expressionBuilders.Add(expression);
             return this;
         }
 
@@ -27,9 +28,8 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             var valuesDictionary = (IDictionary<string, object>) values;
             var lastKey = valuesDictionary.Keys.LastOrDefault();
 
-            var nextKey = 0;
-            if (int.TryParse(lastKey, out nextKey))
-                nextKey++;            
+            if (int.TryParse(lastKey, out int nextKey))
+                nextKey++;
 
             valuesDictionary.Add(nextKey.ToString(), value);
             return nextKey.ToString();
@@ -37,20 +37,20 @@ namespace DataQI.Dapper.FastCrud.Query.Support
 
         public DapperCommand Build()
         {
-            var expressionBuilder = new StringBuilder();
-            var expressionEnumerator = expressions.GetEnumerator();
+            var expressions = BuildExpressions(this);
+            var junctionFormat = BuildFormat(expressions);
 
-            while (expressionEnumerator.MoveNext())
-            {
-                var expression = expressionEnumerator.Current;
+            FormattableString command = FormattableStringFactory.Create(
+                junctionFormat,
+                expressions.ToArray());
 
-                if (expressionBuilder.Length > 0)
-                    expressionBuilder.Append(" AND ");
-
-                expressionBuilder.Append(expression.Build(this));
-            }
-
-            return new DapperCommand(expressionBuilder.ToString(), values);
+            return new DapperCommand(command, values);
         }
+
+        protected override IEnumerable<IDapperExpressionBuilder> GetExpressionBuilders()
+            => expressionBuilders;
+
+        protected override string GetLogicalOperator() 
+            => " AND ";
     }
 }

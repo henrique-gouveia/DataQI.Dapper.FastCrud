@@ -61,7 +61,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var dapperCommand = criteria.BuildCommand();
 
             var entities = connection.Find<TEntity>(statement => statement
-                .Where($"{dapperCommand.Command}")
+                .Where(dapperCommand.Command)
                 .WithParameters(dapperCommand.Values));
 
             return entities;
@@ -77,7 +77,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var dapperCommand = criteria.BuildCommand();
 
             var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where($"{dapperCommand.Command}")
+                .Where(dapperCommand.Command)
                 .WithParameters(dapperCommand.Values));
 
             return entities;

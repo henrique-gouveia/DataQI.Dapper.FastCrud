@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 
-using DataQI.Commons.Query.Support;
+using Dapper.FastCrud;
 
+using DataQI.Commons.Query.Support;
+using DataQI.Dapper.FastCrud.Query;
 using DataQI.Dapper.FastCrud.Query.Extensions;
 using DataQI.Dapper.FastCrud.Query.Support;
 
@@ -9,7 +12,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperCommandBuilderTest : DapperCommandBaseTest
+    public class DapperCommandBuilderTest : DapperExpressionTestBase
     {
         private readonly DapperCommandBuilder commandBuilder;
 
@@ -23,12 +26,15 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         {
             var findByParameters = Parameters(KeyValuePair.Create<string, object>("0", "fake name"));
             var findByParametersExpected = Parameters(findByParameters);
+            
+            FormattableString expression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString expressionCommand = $"{expression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
 
             var firstNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
-
             commandBuilder.AddExpression(firstNameCriterion.GetExpressionBuilder());
 
-            AssertCommand("FirstName = @0", findByParametersExpected, commandBuilder.Build());
+            AssertCommand(expectedCommand, commandBuilder.Build());
         }
 
         [Fact]
@@ -40,6 +46,11 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             );
             var findByParametersExpected = Parameters(findByParameters);
 
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+            FormattableString expressionCommand = $"{firstExpression} AND {secondExpression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
+
             var firstNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
             var lastNameCriterion = Restrictions.Equal("LastName", findByParameters["1"]);
 
@@ -47,7 +58,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .AddExpression(firstNameCriterion.GetExpressionBuilder())
                 .AddExpression(lastNameCriterion.GetExpressionBuilder());
 
-            AssertCommand("FirstName = @0 AND LastName = @1", findByParametersExpected, commandBuilder.Build());
+            AssertCommand(expectedCommand, commandBuilder.Build());
         }
 
         [Fact]
@@ -56,13 +67,18 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var findByParameters = Parameters(KeyValuePair.Create<string, object>("0", "fake name"));
             var findByParametersExpected = Parameters(findByParameters);
 
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString firstJunctionExpression = $"({firstExpression})";
+            FormattableString expressionCommand = $"{firstJunctionExpression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
+
             var junction = Restrictions
                 .Conjunction()
                 .Add(Restrictions.Equal("FirstName", findByParameters["0"]));
 
             commandBuilder.AddExpression(junction.GetExpressionBuilder());
 
-            AssertCommand("(FirstName = @0)", findByParametersExpected, commandBuilder.Build());
+            AssertCommand(expectedCommand, commandBuilder.Build());
         }
 
         [Fact]
@@ -71,13 +87,18 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var findByParameters = Parameters(KeyValuePair.Create<string, object>("0", "fake name"));
             var findByParametersExpected = Parameters(findByParameters);
 
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString firstJunctionExpression = $"({firstExpression})";
+            FormattableString expressionCommand = $"{firstJunctionExpression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
+
             var junction = Restrictions
                 .Disjunction()
                 .Add(Restrictions.Equal("FirstName", findByParameters["0"]));
 
             commandBuilder.AddExpression(junction.GetExpressionBuilder());
 
-            AssertCommand("(FirstName = @0)", findByParametersExpected, commandBuilder.Build());
+            AssertCommand(expectedCommand, commandBuilder.Build());
         }
 
         [Fact]
@@ -89,6 +110,15 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             );
             var findByParametersExpected = Parameters(findByParameters);
 
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString firstJunctionExpression = $"({firstExpression})";
+
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+            FormattableString secondJunctionExpression = $"({secondExpression})";
+
+            FormattableString expressionCommand = $"{firstJunctionExpression} AND {secondJunctionExpression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
+
             var firstNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
             var lastNameCriterion = Restrictions.Equal("LastName", findByParameters["1"]);    
 
@@ -104,7 +134,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .AddExpression(junction1.GetExpressionBuilder())
                 .AddExpression(junction2.GetExpressionBuilder());
 
-            AssertCommand("(FirstName = @0) AND (LastName = @1)", findByParametersExpected, commandBuilder.Build());
+            AssertCommand(expectedCommand, commandBuilder.Build());
         }
 
         [Fact]
@@ -116,6 +146,15 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             );
             var findByParametersExpected = Parameters(findByParameters);
 
+            FormattableString firstExpression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString firstJunctionExpression = $"({firstExpression})";
+
+            FormattableString secondExpression = $"{Sql.Column("LastName")} = @{"1"}";
+            FormattableString secondJunctionExpression = $"({secondExpression})";
+
+            FormattableString expressionCommand = $"{firstJunctionExpression} AND {secondJunctionExpression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
+
             var firstNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
             var lastNameCriterion = Restrictions.Equal("LastName", findByParameters["1"]);    
 
@@ -131,7 +170,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .AddExpression(junction1.GetExpressionBuilder())
                 .AddExpression(junction2.GetExpressionBuilder());
 
-            AssertCommand("(FirstName = @0) AND (LastName = @1)", findByParametersExpected, commandBuilder.Build());
+            AssertCommand(expectedCommand, commandBuilder.Build());
         }
     }
 }

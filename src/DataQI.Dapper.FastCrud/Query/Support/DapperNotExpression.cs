@@ -1,3 +1,5 @@
+using System;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
 using DataQI.Commons.Query.Support;
@@ -16,25 +18,29 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             this.notExpression = notExpression;
         }
 
-        public string Build(IDapperCommandBuilder commandBuilder)
+        public FormattableString Build(IDapperCommandBuilder commandBuilder)
         {
-            var notOperator = notExpression.Criterion.GetNotOperator();
-            var expression = notExpression
+            FormattableString expression = notExpression
                 .Criterion
                 .GetExpressionBuilder()
                 .Build(commandBuilder);
 
-            var match = Regex.Match(expression, "(Between|Like|In|Null|=)");
-            if (match.Success) 
+            string commandTemplate = expression.Format;
+            string notOperator = notExpression.Criterion.GetNotOperator();
+
+            var match = Regex.Match(commandTemplate, "(Between|Like|In|Null|=)");
+            if (match.Success)
             {
-                expression = Regex.Replace(
-                    input: expression, 
-                    pattern: match.Value, 
-                    replacement: $"{notOperator}{match.Value}", 
+                commandTemplate = Regex.Replace(
+                    input: commandTemplate,
+                    pattern: match.Value,
+                    replacement: $"{notOperator}{match.Value}",
                     options: RegexOptions.IgnoreCase);
             }
- 
-            return expression;
+
+            return FormattableStringFactory.Create(
+                commandTemplate,
+                expression.GetArguments());
         }
     }
 }
