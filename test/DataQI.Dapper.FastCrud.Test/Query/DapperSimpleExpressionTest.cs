@@ -1,12 +1,10 @@
 using System;
 using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
-
 using DataQI.Dapper.FastCrud.Query;
 using DataQI.Dapper.FastCrud.Query.Extensions;
 using DataQI.Dapper.FastCrud.Query.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
-
 using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query

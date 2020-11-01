@@ -1,3 +1,4 @@
+using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Dapper.FastCrud.Query.Extensions;
 
@@ -9,12 +10,8 @@ namespace DataQI.Dapper.FastCrud.Query.Support
         {
             var commandBuilder = new DapperCommandBuilder();
 
-            var criterionsEnumerator = criterions.GetEnumerator();
-            while (criterionsEnumerator.MoveNext()) 
-            {
-                var criterion = criterionsEnumerator.Current;
+            foreach (ICriterion criterion in criterions)
                 commandBuilder.AddExpression(criterion.GetExpressionBuilder());
-            }
 
             return commandBuilder.Build();
         }
