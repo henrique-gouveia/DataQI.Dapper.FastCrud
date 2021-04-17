@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper.FastCrud" Version="2.5.0.39" />
-    <PackageReference Include="DataQI.Commons" Version="1.1.0-preview" />
+    <PackageReference Include="DataQI.Commons" Version="1.2.0-preview" />
   </ItemGroup>
 
 </Project>
