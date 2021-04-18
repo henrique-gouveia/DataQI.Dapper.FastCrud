@@ -1,5 +1,5 @@
 using System;
-
+using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Query;
@@ -11,7 +11,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperNullExpressionTest: IClassFixture<QueryFixture>
+    public class DapperNullExpressionTest: DapperExpressionTestBase, IClassFixture<QueryFixture>
     {
         private readonly IDapperCommandBuilder commandBuilder;
 
@@ -35,7 +35,10 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestBuildNullExpressionCorrectly()
         {
             var criterion = Restrictions.Null("Email");
-            Assert.Equal("Email Is Null", criterion.GetExpressionBuilder().Build(commandBuilder));
+
+            AssertExpression(
+                $"{Sql.Column("Email")} Is Null",
+                criterion.GetExpressionBuilder().Build(commandBuilder));
         }          
     }
 }

@@ -1,3 +1,8 @@
+using System;
+using System.Runtime.CompilerServices;
+
+using Dapper.FastCrud;
+
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
 using DataQI.Dapper.FastCrud.Query.Extensions;
@@ -14,15 +19,17 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             this.betweenExpression = betweenExpression;
         }
 
-        public string Build(IDapperCommandBuilder commandBuilder)
+        public FormattableString Build(IDapperCommandBuilder commandBuilder)
         {
-            var parameterNameStarts = commandBuilder.AddExpressionValue(betweenExpression.Starts);
-            var parameterNameEnds = commandBuilder.AddExpressionValue(betweenExpression.Ends);
+            string commandTemplate = betweenExpression.GetCommandTemplate();
+            IFormattable columnName = Sql.Column(betweenExpression.GetPropertyName());
+            string parameterNameStarts = commandBuilder.AddExpressionValue(betweenExpression.Starts);
+            string parameterNameEnds = commandBuilder.AddExpressionValue(betweenExpression.Ends);
 
-            return string.Format(
-                betweenExpression.GetCommandTemplate(), 
-                betweenExpression.GetPropertyName(), 
-                parameterNameStarts,
+            return FormattableStringFactory.Create(
+                commandTemplate, 
+                columnName, 
+                parameterNameStarts, 
                 parameterNameEnds);
         }
     }

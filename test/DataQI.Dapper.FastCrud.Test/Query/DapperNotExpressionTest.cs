@@ -1,5 +1,5 @@
 using System;
-
+using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Query;
@@ -11,7 +11,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperNotExpressionTest : IClassFixture<QueryFixture>
+    public class DapperNotExpressionTest : DapperExpressionTestBase, IClassFixture<QueryFixture>
     {
         private readonly IDapperCommandBuilder commandBuilder;
 
@@ -37,7 +37,9 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var between = Restrictions.Between("DateOfBirth", DateTime.Now.AddYears(-1), DateTime.Now.AddYears(1));
             var notBetween = Restrictions.Not(between);
 
-            Assert.Equal("DateOfBirth Not Between @0 And @1", notBetween.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("DateOfBirth")} Not Between @{"0"} And @{"1"}",
+                notBetween.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -46,7 +48,9 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var startingWith = Restrictions.StartingWith("LastName", "Fake Name");
             var notStartingWith = Restrictions.Not(startingWith);
 
-            Assert.Equal("LastName Not Like @0", notStartingWith.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("LastName")} Not Like @{"0"}",
+                notStartingWith.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -55,7 +59,9 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var endingWith = Restrictions.EndingWith("LastName", "Fake Name");
             var notEndingWith = Restrictions.Not(endingWith);
 
-            Assert.Equal("LastName Not Like @0", notEndingWith.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("LastName")} Not Like @{"0"}",
+                notEndingWith.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -64,16 +70,20 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var containing = Restrictions.Containing("FirstName", "Fake Name");
             var notContaining = Restrictions.Not(containing);
 
-            Assert.Equal("FirstName Not Like @0", notContaining.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("FirstName")} Not Like @{"0"}",
+                notContaining.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
         public void TestBuildNotLikeExpressionCorrectly()
         {
-            var containing = Restrictions.Like("FirstName", "Fake Name");
-            var notContaining = Restrictions.Not(containing);
+            var like = Restrictions.Like("FirstName", "Fake Name");
+            var notLike = Restrictions.Not(like);
 
-            Assert.Equal("FirstName Not Like @0", notContaining.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("FirstName")} Not Like @{"0"}",
+                notLike.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -82,7 +92,9 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var equal = Restrictions.Equal("FirstName", "Fake Name");
             var notEqual = Restrictions.Not(equal);
 
-            Assert.Equal("FirstName != @0", notEqual.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("FirstName")} != @{"0"}",
+                notEqual.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
@@ -91,16 +103,20 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var In = Restrictions.In("FirstName", new string[] { "Fake Name A", "Fake Name B", "Fake Name C" });
             var notIn = Restrictions.Not(In);
 
-            Assert.Equal("FirstName Not In @0", notIn.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("FirstName")} Not In @{"0"}",
+                notIn.GetExpressionBuilder().Build(commandBuilder));
         }
 
         [Fact]
         public void TestBuildNotNullExpressionCorrectly()
         {
             var Null = Restrictions.Null("Email");
-            var notIn = Restrictions.Not(Null);
+            var notNull = Restrictions.Not(Null);
 
-            Assert.Equal("Email Is Not Null", notIn.GetExpressionBuilder().Build(commandBuilder));
+            AssertExpression(
+                $"{Sql.Column("Email")} Is Not Null",
+                notNull.GetExpressionBuilder().Build(commandBuilder));
         }
     }
 }

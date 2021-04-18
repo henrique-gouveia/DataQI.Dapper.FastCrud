@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
@@ -8,7 +10,7 @@ using DataQI.Dapper.FastCrud.Query.Extensions;
 
 namespace DataQI.Dapper.FastCrud.Query.Support
 {
-    public class DapperJunctionExpression : IDapperExpressionBuilder
+    public class DapperJunctionExpression : DapperExpressionBuilder, IDapperExpressionBuilder
     {
         private readonly Junction junction;
 
@@ -18,39 +20,20 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             this.junction = junction;
         }
 
-        public string Build(IDapperCommandBuilder commandBuilder)
+        public FormattableString Build(IDapperCommandBuilder commandBuilder)
         {
-            var sqlWhereBuilder = new StringBuilder();
-            var expressionsNumerator = BuildExpressionsBuilder().GetEnumerator();
+            var expressions = BuildExpressions(commandBuilder);
+            var junctionFormat = $"({BuildFormat(expressions)})";
 
-            while (expressionsNumerator.MoveNext())
-            {
-                if (sqlWhereBuilder.Length > 0)
-                    sqlWhereBuilder.Append(junction.GetLogicalOperator());
-
-                var expressionBuilder = expressionsNumerator.Current;
-                sqlWhereBuilder.Append(expressionBuilder.Build(commandBuilder));
-            }
-
-            return string.Format(
-                junction.GetCommandTemplate(), 
-                sqlWhereBuilder.ToString());
+            return FormattableStringFactory.Create(
+                junctionFormat, 
+                expressions.ToArray());
         }
 
-        private IReadOnlyCollection<IDapperExpressionBuilder> BuildExpressionsBuilder()
-        {
-            var criterionsEnumerator = junction.Criterions.GetEnumerator();
-            var expressions = new List<IDapperExpressionBuilder>();
+        protected override IEnumerable<IDapperExpressionBuilder> GetExpressionBuilders()
+            => junction.Criterions.Select(c => c.GetExpressionBuilder());
 
-            while (criterionsEnumerator.MoveNext()) 
-            {
-                var criterion = criterionsEnumerator.Current;
-               
-                IDapperExpressionBuilder builder = criterion.GetExpressionBuilder();
-                expressions.Add(builder);
-            }
-
-            return expressions;       
-        }
+        protected override string GetLogicalOperator()
+            => junction.GetLogicalOperator();
     }
 }

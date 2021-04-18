@@ -1,14 +1,15 @@
 using System;
 using System.Collections.Generic;
-
+using Dapper.FastCrud;
 using DataQI.Commons.Query.Support;
+using DataQI.Dapper.FastCrud.Query;
 using DataQI.Dapper.FastCrud.Query.Support;
 
 using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Query
 {
-    public class DapperCriteriaTest : DapperCommandBaseTest
+    public class DapperCriteriaTest : DapperExpressionTestBase
     {
         private readonly DapperCriteria criteria;
 
@@ -29,121 +30,21 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         [Fact]
-        public void TestBuildCommandSimpleExpression()
+        public void TestBuildCommandCorrectly()
         {
             var findByParameters = Parameters(KeyValuePair.Create<string, object>("0", "fake name"));
             var findByParametersExpected = Parameters(findByParameters);
+
+            FormattableString expression = $"{Sql.Column("FirstName")} = @{"0"}";
+            FormattableString expressionCommand = $"{expression}";
+            DapperCommand expectedCommand = Command(expressionCommand, findByParametersExpected);
 
             var firstNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
 
             criteria.Add(firstNameCriterion);
             var command = criteria.BuildCommand();
 
-            AssertCommand("FirstName = @0", findByParametersExpected, command);
+            AssertCommand(expectedCommand, command);
         }
-
-        [Fact]
-        public void TestBuildCommandComposedExpressionCorrectly()
-        {
-            var findByParameters = Parameters(
-                KeyValuePair.Create<string, object>("0", "Fake First Name"),
-                KeyValuePair.Create<string, object>("1", "Fake Last Name")
-            );
-            var findByParametersExpected = Parameters(findByParameters);
-
-            var firstNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
-            var lastNameCriterion = Restrictions.Equal("LastName", findByParameters["1"]);
-
-            criteria
-                .Add(firstNameCriterion)
-                .Add(lastNameCriterion);
-            var command = criteria.BuildCommand();
-
-            AssertCommand("FirstName = @0 AND LastName = @1", findByParametersExpected, command);
-        }
-
-        [Fact]
-        public void TestBuildSimpleConjunctionWithSimpleExpressionCorrectly()
-        {
-            var findByParameters = Parameters(KeyValuePair.Create<string, object>("0", "fake name"));
-            var findByParametersExpected = Parameters(findByParameters);
-
-            var junction = Restrictions
-                .Conjunction()
-                .Add(Restrictions.Equal("FirstName", findByParameters["0"]));
-
-            criteria.Add(junction);
-            var command = criteria.BuildCommand();
-
-            AssertCommand("(FirstName = @0)", findByParametersExpected, command);
-        }
-
-        [Fact]
-        public void TestBuildSimpleDisjunctionWithSimpleExpressionCorrectly()
-        {
-            var findByParameters = Parameters(KeyValuePair.Create<string, object>("0", "fake name"));
-            var findByParametersExpected = Parameters(findByParameters);
-
-            var junction = Restrictions
-                .Disjunction()
-                .Add(Restrictions.Equal("FirstName", findByParameters["0"]));
-
-            criteria.Add(junction);
-            var command = criteria.BuildCommand();
-
-            AssertCommand("(FirstName = @0)", findByParametersExpected, command);
-        }
-
-        [Fact]
-        public void TestBuildComposedConjunctionWithSimpleExpressionCorrectly()
-        {
-            var findByParameters = Parameters(
-                KeyValuePair.Create<string, object>("0", "Fake First Name"),
-                KeyValuePair.Create<string, object>("1", "Fake Last Name")
-            );
-            var findByParametersExpected = Parameters(findByParameters);
-
-            var firtNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
-            var lastNameCriterion = Restrictions.Equal("LastName", findByParameters["1"]);    
-
-            var junction1 = Restrictions
-                .Conjunction()
-                .Add(firtNameCriterion);
-
-            var junction2 = Restrictions
-                .Conjunction()
-                .Add(lastNameCriterion);
-
-            criteria.Add(junction1).Add(junction2);
-            var command = criteria.BuildCommand();
-
-            AssertCommand("(FirstName = @0) AND (LastName = @1)", findByParametersExpected, command);
-        }
-
-        [Fact]
-        public void TestBuildComposedDisjunctionWithSimpleExpressionCorrectly()
-        {
-            var findByParameters = Parameters(
-                KeyValuePair.Create<string, object>("0", "Fake First Name"),
-                KeyValuePair.Create<string, object>("1", "Fake Last Name")
-            );
-            var findByParametersExpected = Parameters(findByParameters);
-
-            var firtNameCriterion = Restrictions.Equal("FirstName", findByParameters["0"]);
-            var lastNameCriterion = Restrictions.Equal("LastName", findByParameters["1"]);    
-
-            var junction1 = Restrictions
-                .Disjunction()
-                .Add(firtNameCriterion);
-
-            var junction2 = Restrictions
-                .Disjunction()
-                .Add(lastNameCriterion);
-
-            criteria.Add(junction1).Add(junction2);
-            var command = criteria.BuildCommand();
-
-            AssertCommand("(FirstName = @0) AND (LastName = @1)", findByParametersExpected, command);
-        }        
     }
 }
