@@ -2,16 +2,16 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.2.1-preview</Version>
+    <Version>1.3.0-preview</Version>
     <Authors>Henrique Gouveia</Authors>
     <Description>Data Query Interface it's Dapper.FastCrud provider that use infraestructure provided by DataQI.Commons and it turns your Data Repositories a live interface.</Description>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Copyright></Copyright>
-    <PackageProjectUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</PackageProjectUrl>
+    <Copyright>(c) Henrique Gouveia</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</RepositoryUrl>
-    <AssemblyVersion>1.2.1.0</AssemblyVersion>
-    <FileVersion>1.2.1.0</FileVersion>
-    <PackageLicenseExpression></PackageLicenseExpression>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Data Query Interface Provider for Dapper.FastCrud</PackageTags>
+    <PackageProjectUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</PackageProjectUrl>
+    <Product />
   </PropertyGroup>
 
   <ItemGroup>
