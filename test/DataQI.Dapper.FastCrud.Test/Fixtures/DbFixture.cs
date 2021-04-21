@@ -3,13 +3,13 @@ using System.Data;
 using System.Data.SQLite;
 
 using Dapper.FastCrud;
-
 using DataQI.Dapper.FastCrud.Repository.Support;
 
 using DataQI.Dapper.FastCrud.Test.Extensions;
 using DataQI.Dapper.FastCrud.Test.Resources;
-using DataQI.Dapper.FastCrud.Test.Repository.Persons;
+using DataQI.Dapper.FastCrud.Test.Repository.Customers;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
+using DataQI.Dapper.FastCrud.Test.Repository.Employees;
 
 namespace DataQI.Dapper.FastCrud.Test.Fixtures
 {
@@ -21,12 +21,14 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             Connection = CreateConnection();
 
             // 1. Default
-            // PersonRepository = new PersonRepository(Connection);
+            // CustomerRepository = new CustomerRepository(Connection);
+            // EmployeeRepository = new EmployeeRepository(Connection);
             // ProductRepository = new ProductRepository(Connection);
 
             // 2. Provided
             var repositoryFactory = new DapperRepositoryFactory(Connection);
-            PersonRepository = repositoryFactory.GetRepository<IPersonRepository>();
+            CustomerRepository = repositoryFactory.GetRepository<ICustomerRepository>();
+            EmployeeRepository = repositoryFactory.GetRepository<IEmployeeRepository>(new EmployeeRepository(Connection));
             ProductRepository = repositoryFactory.GetRepository<IProductRepository>();
 
             CreateTables();
@@ -45,7 +47,9 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             using (var command = Connection.CreateCommand())
             {
                 var sql = new StringBuilder()
-                    .Append(SqlResource.PERSON_CREATE_SCRIPT)
+                    .Append(SqlResource.CUSTOMER_CREATE_SCRIPT)
+                    .Append(SqlResource.DEPARTMENT_CREATE_SCRIT)
+                    .Append(SqlResource.EMPLOYEE_CREATE_SCRIT)
                     .Append(SqlResource.PRODUCT_CREATE_SCRIPT)
                     .ToString();
 
@@ -57,8 +61,8 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
 
         public IDbConnection Connection { get; }
 
-        public IPersonRepository PersonRepository { get; }
-
+        public ICustomerRepository CustomerRepository { get; }
+        public IEmployeeRepository EmployeeRepository { get; }
         public IProductRepository ProductRepository { get; }
     }
 }

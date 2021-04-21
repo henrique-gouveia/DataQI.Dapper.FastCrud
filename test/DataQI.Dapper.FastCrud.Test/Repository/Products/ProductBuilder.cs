@@ -27,10 +27,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
             };
         }
 
-        public static ProductBuilder NewInstance()
-        {
-            return new ProductBuilder();
-        }
+        public static ProductBuilder NewInstance() => new ProductBuilder();
 
         public ProductBuilder SetActive(bool active)
         {
