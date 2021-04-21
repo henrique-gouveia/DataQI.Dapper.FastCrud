@@ -11,6 +11,8 @@ using ExpectedObjects;
 using DataQI.Dapper.FastCrud.Repository;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Customers;
+using DataQI.Commons.Query;
+using DataQI.Commons.Query.Support;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository
 {
@@ -96,6 +98,37 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             InsertTestCustomers();
             var customerExists = ExistsCustomer(new Customer(), useAsyncMethod);
             Assert.False(customerExists);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFind(bool useAsyncMethod)
+        {
+            var customersList = InsertTestCustomersList();
+            var customersEnumerator = customersList.GetEnumerator();
+
+            while (customersEnumerator.MoveNext())
+            {
+                var customer = customersEnumerator.Current;
+                var customerFullNameStartsWith = customer.FullName.Substring(0, 5);
+
+                Func<ICriteria, ICriteria> criteriaBuilder = criteria =>
+                    criteria.Add(Restrictions.Like($"{nameof(Customer.FullName)}", $"{customerFullNameStartsWith}%"));
+
+                var customersExpected = customersList
+                    .Where(c => c.FullName.Substring(0, 5) == customerFullNameStartsWith)
+                    .ToList();
+
+                IEnumerable<Customer> customers;
+
+                if (useAsyncMethod)
+                    customers = customerRepository.FindAsync(criteriaBuilder).Result;
+                else
+                    customers = customerRepository.Find(criteriaBuilder);
+
+                customersExpected.ToExpectedObject().ShouldMatch(customers);
+            }
         }
 
         [Theory]
