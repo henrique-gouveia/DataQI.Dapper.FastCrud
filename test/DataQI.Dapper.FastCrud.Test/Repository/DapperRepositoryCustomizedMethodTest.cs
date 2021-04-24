@@ -15,7 +15,6 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
     public class DapperRepositoryCustomizedMethodTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
-
         private readonly IEmployeeRepository employeeRepository;
 
         public DapperRepositoryCustomizedMethodTest(DbFixture fixture)

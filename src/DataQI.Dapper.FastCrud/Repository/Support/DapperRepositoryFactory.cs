@@ -1,5 +1,4 @@
 using System;
-using System.Data;
 
 using DataQI.Commons.Repository.Core;
 using DataQI.Commons.Util;
@@ -8,26 +7,17 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
 {
     public class DapperRepositoryFactory : RepositoryFactory
     {
-        private readonly IDbConnection connection;
-
-        public DapperRepositoryFactory(IDbConnection connection)
+        protected override object GetRepositoryInstance(Type repositoryType, params object[] args)
         {
-            Assert.NotNull(connection, "Connection must not be null");
+            Assert.NotNull(repositoryType, "Repository Type must not be null");
 
-            this.connection = connection;
-        }
+            var repositoryMetadata = GetRepositoryMetadata(repositoryType);
 
-        protected override object GetCustomImplementation(Type repositoryInterface)
-        {
-            Assert.NotNull(connection, "RepositoryInterface must not be null");
-
-            var repositoryMetadata = GetRepositoryMetadata(repositoryInterface);
-
-            var dapperImplementationType = typeof(DapperRepository<>);
-            var customImplementationType = dapperImplementationType.MakeGenericType(repositoryMetadata.EntityType);
-            var customImplementation = Activator.CreateInstance(customImplementationType, new[] { connection });
-
-            return customImplementation;
+            var dapperRepositoryType = typeof(DapperRepository<>);
+            var repositoryInstanceType = dapperRepositoryType.MakeGenericType(repositoryMetadata.EntityType);
+            
+            var repositoryInstance = Activator.CreateInstance(repositoryInstanceType, args);
+            return repositoryInstance;
         }
     }
 }

@@ -13,28 +13,31 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
     public class DapperRepositoryFactoryTest : IClassFixture<DbFixture>
     {
         private readonly IDbConnection connection;
+        private readonly DapperRepositoryFactory repositoryFactory;
 
         public DapperRepositoryFactoryTest(DbFixture fixture)
         {
             connection = fixture.Connection;
+            repositoryFactory = new DapperRepositoryFactory();
         }
 
         [Fact]
-        public void TestRejectsNullConnection()
-        {
-            var exception = Assert.Throws<ArgumentException>(() => 
-                new DapperRepositoryFactory(null));
-            var exceptionMessage = exception.GetBaseException().Message;
+        public void TestRejectsInvalidArgs()
+            => Assert.Throws<MissingMethodException>(() =>
+                repositoryFactory.GetRepository<IEntityRepository>());
 
-            Assert.IsType<ArgumentException>(exception.GetBaseException());
-            Assert.Equal("Connection must not be null", exceptionMessage);
+        [Fact]
+        public void TestGetRepositoryWithArgsCorrectly()
+        {
+            var entityRepository = repositoryFactory.GetRepository<IEntityRepository>(connection);
+            Assert.NotNull(entityRepository);
         }
 
         [Fact]
-        public void TestGetRepository()
+        public void TestGetRepositoryWithRepositoryFactoryCorrectly()
         {
-            var connectionFactory = new DapperRepositoryFactory(connection);
-            var entityRepository = connectionFactory.GetRepository<IEntityRepository>();
+            var entityRepository = repositoryFactory.GetRepository<IEntityRepository>(() => 
+                new DapperRepository<object>(connection));
 
             Assert.NotNull(entityRepository);
         }
