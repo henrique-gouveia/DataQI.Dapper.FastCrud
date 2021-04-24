@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-using Dapper.FastCrud;
 using ExpectedObjects;
 using Xunit;
+
+using Dapper.FastCrud;
 
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
@@ -15,7 +16,6 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
     public class DapperRepositoryQueryMethodTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
-
         private readonly IProductRepository productRepository;
 
         public DapperRepositoryQueryMethodTest(DbFixture fixture)
@@ -66,8 +66,10 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             while (productEnumerator.MoveNext())
             {
                 var product = productEnumerator.Current;
-                var productsExpected = productList.Where(p => p.Name.Substring(1, 10) == product.Name.Substring(1, 10) && p.Stock > 0);
-                var products = productRepository.FindByNameLikeAndStockGreaterThan($"{product.Name}%", 0);
+                var productNameStartsWith = product.Name.Substring(0, 5);
+
+                var productsExpected = productList.Where(p => p.Name.StartsWith(productNameStartsWith) && p.Stock > 0);
+                var products = productRepository.FindByNameLikeAndStockGreaterThan($"{productNameStartsWith}%", 0);
 
                 productsExpected.ToExpectedObject().ShouldMatch(products);
             }
@@ -84,10 +86,12 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             while (productEnumerator.MoveNext())
             {
                 var product = productEnumerator.Current;
+                var productNameStartsWith = product.Name.Substring(0, 5);
+
                 var productsExpected = productList.Where(p =>
-                    departments.Any(d => d == p.Department) &&
-                    p.Name.Substring(1, 10) == product.Name.Substring(1, 10));
-                var products = productRepository.FindByDepartmentInAndNameLike(departments.ToArray(), $"{product.Name}%");
+                    departments.Any(d => d == p.Department) 
+                    && p.Name.StartsWith(productNameStartsWith));
+                var products = productRepository.FindByDepartmentInAndNameLike(departments.ToArray(), $"{productNameStartsWith}%");
 
                 productsExpected.ToExpectedObject().ShouldMatch(products);
             }
