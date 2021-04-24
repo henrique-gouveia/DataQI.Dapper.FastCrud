@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
-using Dapper.FastCrud;
+using Dapper.FastCrud;  
 
 using Xunit;
 using ExpectedObjects;
@@ -19,7 +19,6 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
     public class DapperRepositoryTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
-
         private readonly IDapperRepository<Customer> customerRepository;
 
         public DapperRepositoryTest(DbFixture fixture)
@@ -166,6 +165,25 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
+        public void TestFindOneReturnsNull(bool useAsyncMethod)
+        {
+            InsertTestCustomers();
+            var customer = FindOneCustomer(new Customer(), useAsyncMethod);
+
+            Assert.Null(customer);
+        }
+
+        private Customer FindOneCustomer(Customer customer, bool useAsyncMethod)
+        {
+            if (useAsyncMethod)
+                return customerRepository.FindOneAsync(customer).Result;
+            else
+                return customerRepository.FindOne(customer);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestDelete(bool useAsyncMethod)
         {
             var customers = InsertTestCustomers();
@@ -183,17 +201,6 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             }
         }
 
-        [Theory]
-        [InlineData(false)]
-        [InlineData(true)]
-        public void TestFindOneReturnsNull(bool useAsyncMethod)
-        {
-            InsertTestCustomers();
-            var customer = FindOneCustomer(new Customer(), useAsyncMethod);
-
-            Assert.Null(customer);
-        }
-
         private bool ExistsCustomer(Customer customer, bool useAsyncMethod)
         {
             if (useAsyncMethod)
@@ -202,13 +209,6 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                 return customerRepository.Exists(customer);
         }
 
-        private Customer FindOneCustomer(Customer customer, bool useAsyncMethod)
-        {
-            if (useAsyncMethod)
-                return customerRepository.FindOneAsync(customer).Result;
-            else
-                return customerRepository.FindOne(customer);
-        }
         private IEnumerator<Customer> InsertTestCustomers()
         {
             var customers = InsertTestCustomersList();

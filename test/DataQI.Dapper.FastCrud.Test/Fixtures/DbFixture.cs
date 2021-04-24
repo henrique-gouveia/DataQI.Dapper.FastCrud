@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SQLite;
 
 using Dapper.FastCrud;
+
 using DataQI.Dapper.FastCrud.Repository.Support;
 
 using DataQI.Dapper.FastCrud.Test.Extensions;
@@ -10,6 +11,7 @@ using DataQI.Dapper.FastCrud.Test.Resources;
 using DataQI.Dapper.FastCrud.Test.Repository.Customers;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
 using DataQI.Dapper.FastCrud.Test.Repository.Employees;
+using DataQI.Dapper.FastCrud.Repository;
 
 namespace DataQI.Dapper.FastCrud.Test.Fixtures
 {
@@ -19,6 +21,8 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
         {
             OrmConfiguration.DefaultDialect = SqlDialect.SqLite;
             Connection = CreateConnection();
+            
+            CreateTables();
 
             // 1. Default
             // CustomerRepository = new CustomerRepository(Connection);
@@ -26,12 +30,11 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             // ProductRepository = new ProductRepository(Connection);
 
             // 2. Provided
-            var repositoryFactory = new DapperRepositoryFactory(Connection);
-            CustomerRepository = repositoryFactory.GetRepository<ICustomerRepository>();
-            EmployeeRepository = repositoryFactory.GetRepository<IEmployeeRepository>(new EmployeeRepository(Connection));
-            ProductRepository = repositoryFactory.GetRepository<IProductRepository>();
+            var repositoryFactory = new DapperRepositoryFactory();
 
-            CreateTables();
+            CustomerRepository = repositoryFactory.GetRepository<IDapperRepository<Customer>>(Connection);
+            EmployeeRepository = repositoryFactory.GetRepository<IEmployeeRepository>(() => new EmployeeRepository(Connection));
+            ProductRepository = repositoryFactory.GetRepository<IProductRepository>(Connection);
         }
 
         private IDbConnection CreateConnection() 
@@ -61,7 +64,7 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
 
         public IDbConnection Connection { get; }
 
-        public ICustomerRepository CustomerRepository { get; }
+        public IDapperRepository<Customer> CustomerRepository { get; }
         public IEmployeeRepository EmployeeRepository { get; }
         public IProductRepository ProductRepository { get; }
     }

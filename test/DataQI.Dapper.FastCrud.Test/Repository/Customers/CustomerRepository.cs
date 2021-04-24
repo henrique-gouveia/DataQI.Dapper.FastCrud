@@ -7,7 +7,7 @@ using DataQI.Dapper.FastCrud.Repository.Support;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository.Customers
 {
-    public class CustomerRepository : DapperRepository<Customer>, ICustomerRepository
+    public class CustomerRepository : DapperRepository<Customer>
     {
         public CustomerRepository(IDbConnection connection) : base(connection)
         {
