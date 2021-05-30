@@ -2,9 +2,10 @@
 
 Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers making possible the definition repository interfaces, providing behaviors for standard operations as well to defines customized queries through method signatures.
 
-[![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
-[![Build status](https://ci.appveyor.com/api/projects/status/rl2ja69994rt3ei6?svg=true)](https://ci.appveyor.com/project/henrique-gouveia/dataqi-dapper-fastcrud)
+[![Build](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/actions/workflows/dotnet.yml/badge.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/actions/workflows/dotnet.yml)
 [![codecov](https://codecov.io/gh/henrique-gouveia/DataQI.Dapper.FastCrud/branch/master/graph/badge.svg)](https://codecov.io/gh/henrique-gouveia/DataQI.Dapper.FastCrud)
+[![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
+<!-- [![License](https://img.shields.io/github/license/henrique-gouveia/DataQI.Dapper.FastCrud.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/master/LICENSE.txt) -->
 
 ## Getting Started
 
