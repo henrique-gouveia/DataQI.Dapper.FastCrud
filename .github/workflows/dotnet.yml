@@ -1,0 +1,107 @@
+name: .NET
+
+on:
+  push:
+    branches: 
+      - master
+      - develop
+      - 'feature/**'
+      - 'hotfix/**'
+      - 'release/**'
+
+  pull_request:
+    branches: 
+      - master
+      - develop
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+    # checks-out repository
+    - uses: actions/checkout@v2
+
+    # Setup a dotnet cli and tools
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 2.2.300
+
+    # Install tools
+    - name: Install tools
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+    # Restore
+    - name: Install dependencies
+      run: dotnet restore
+    
+    # Build
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    # Test
+    - name: Test
+      run: dotnet test --configuration Release --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./TestResults/'
+    
+    - name: Package
+      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+      run: dotnet pack --configuration Release --no-restore -o lib
+
+    # Upload
+    - name: Upload artifacts
+      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+      uses: actions/upload-artifact@v2
+      with:
+        name: artifacts
+        path: |
+          ${{ github.workspace }}/codecov.yml
+          ${{ github.workspace }}/test/DataQI.Dapper.FastCrud.Test/TestResults/*.xml
+          ${{ github.workspace }}/src/DataQI.Dapper.FastCrud/lib/*.nupkg
+        retention-days: 5
+
+  verify-code:
+    name: Verify Code
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+    needs: build
+
+    steps:
+    # Download
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: artifacts
+
+    # Codecov
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
+        directory: ${{ github.workspace }}/test/DataQI.Dapper.FastCrud.Test/TestResults/
+        flags: unittests # optional
+        name: codecov-umbrella # optional
+        fail_ci_if_error: true # optional (default = false)
+        # verbose: true # optional (default = false)
+
+  deploy-prod:
+    name: Deploy Prod
+    if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') }}
+    needs: verify-code
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+    
+    steps:
+    # Download
+    - name: Download artifacts
+      uses: actions/download-artifact@v2
+      with:
+        name: artifacts
+
+    # NuGet  
+    - name: Publish nupkg
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
+      run: dotnet nuget push --api-key $NUGET_AUTH_TOKEN --source https://api.nuget.org/v3/index.json  ${{ github.workspace }}/src/DataQI.Dapper.FastCrud/lib/*.nupkg
