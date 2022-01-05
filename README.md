@@ -54,9 +54,9 @@ Should to use a instance of the `DapperRepositoryFactory` class to instantiate a
 
 ```csharp
 IDbConnection connection = CreateConnection();
-var repositoryFactory = new DapperRepositoryFactory(Connection);
+var repositoryFactory = new DapperRepositoryFactory();
 
-personRepository = repositoryFactory.GetRepository<IPersonRepository>();
+personRepository = repositoryFactory.GetRepository<IPersonRepository>(connection);
 ```
 
 ### Using Default Methods
@@ -124,10 +124,10 @@ Customized Queries can be defined through method signatures with the following c
 | **NotEqual** | FindByName**Not**, FindByName**NotEqual** | where Name **<>** @0
 | **Between** | FindByAge**Between** | where Age **between** @0 **and** @1
 | **NotBetween** | FindByAge**NotBetween** | where Age **not between** @0 **and** @1
-| **GreaterThan** | FindByDateOfBirth**GreaterThan** | where DateOfBirth **>** @0
-| **GreaterThanEqual** | FindByDateOfBirth**GreaterThanEqual** | where DateOfBirth **>=** @0
-| **LessThan** | FindByDateOfBirth**LessThan** | where DateOfBirth **<** @0
-| **LessThanEqual** | FindByDateOfBirth**LessThanEqual** | where DateOfBirth **<=** @0
+| **GreaterThan** | FindByBirthDate**GreaterThan** | where BirthDate **>** @0
+| **GreaterThanEqual** | FindByBirthDate**GreaterThanEqual** | where BirthDate **>=** @0
+| **LessThan** | FindByBirthDate**LessThan** | where BirthDate **<** @0
+| **LessThanEqual** | FindByBirthDate**LessThanEqual** | where BirthDate **<=** @0
 | **In** | FindByAddressType**In** | where AddressType **in** (@0)
 | **NotIn** | FindByAddressType**NotIn** | where AddressType **not in** (@0)
 | **Null** | FindByEmail**Null** | where Email **is null**
@@ -149,25 +149,80 @@ Customized Queries can be defined through method signatures with the following c
 public interface IPersonRepository : IDapperRepository<Person>
 {
     IEnumerable<Person> FindByLastName(string name);
-    IEnumerable<Person> FindByDateOfBirthBetween(DateTime startDate, DateTime endDate);
+    IEnumerable<Person> FindByBirthDateBetween(DateTime startDate, DateTime endDate);
     IEnumerable<Person> FindByFirstNameLikeAndActive(string name, bool active = true);
     IEnumerable<Person> FindByEmailLikeOrPhoneNotNull(string email);
-    IEnumerable<Person> FindByFirstNameAndLastNameOrDateOfBirthGreaterThan(string firstName, string lastName, DateTime registerDate);
+    IEnumerable<Person> FindByFirstNameAndLastNameOrBirthDateGreaterThan(string firstName, string lastName, DateTime registerDate);
 }
 
 IDbConnection connection = CreateConnection();
-var factory = new DapperRepositoryFactory(connection);
+var factory = new DapperRepositoryFactory();
 
-var personRepository = factory.GetRepository<IPersonRepository>();
+var personRepository = factory.GetRepository<IPersonRepository>(connection);
 
 var persons = personRepository.FindByLastName("A Last Name");
-persons = personRepository.FindByDateOfBirthBetween(new DateTime(2015, 1, 1), new DateTime(2020, 1, 1));
+persons = personRepository.FindByBirthDateBetween(new DateTime(2015, 1, 1), new DateTime(2020, 1, 1));
 persons = personRepository.FindByFirstNameLikeAndActive(string name, bool active = true);
 persons = personRepository.FindByEmailLikeOrPhoneNotNull(string email);
-persons = personRepository.FindFindByFirstNameAndLastNameOrDateOfBirthGreaterThan("A First Name", "A Last Name", new DateTime(2019, 1, 1));
+persons = personRepository.FindFindByFirstNameAndLastNameOrBirthDateGreaterThan("A First Name", "A Last Name", new DateTime(2019, 1, 1));
+```
+
+### Using Customized Methods
+
+Customized Methods can be defined as normal class:
+
+- The method should be defined in the repository interface.
+- The class with implementation may or may not implement the interface.
+- This can be used for any kind of customization that you want.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    // Query Methods
+    IEnumerable<Person> FindByEmailNotNull();
+    IEnumerable<Person> FindByFirstNameStartingWith(string firstName);
+
+    // Customized Methods
+    void AddAll(IEnumerable<Person> persons);
+}
+
+public class PersonRepository : DapperRepository<Person>
+{
+    public void AddAll(IEnumerable<Person> persons)
+    {
+        foreach (var person in persons)
+        {
+            this.Insert(person)
+        }
+    }
+}
+
+// Getting Repository
+IDbConnection connection = CreateConnection();
+var factory = new DapperRepositoryFactory();
+
+var personRepository = factory.GetRepository<IPersonRepository>(() => new PersonRepository(connection));
+
+// Using Query Methods
+var persons = personRepository.FindByEmailNotNull();
+persons = personRepository.FindByFirstNameStartingWith("Name");
+
+// Using Customized Methods
+person1 = new Person() {...};
+person2 = new Person() {...};
+person3 = new Person() {...};
+
+personRepository.AddAll(new List<Person> { person1, person2, person3 });
 ```
 
 ## News
+
+**v1.2.0 - 2021/01**
+
+* New! Added support to new Repository Factory features
+* New! Added capability to invokes non-standard methods defined on client
+* Change! _TEntity_ requirements on generic interface _IDapperRepository_
+* **Break Change!** Removed _DbConnection_ as argument on _DapperRepositoryFactory_ constructor
 
 **v1.1.0 - 2020/09**
 
