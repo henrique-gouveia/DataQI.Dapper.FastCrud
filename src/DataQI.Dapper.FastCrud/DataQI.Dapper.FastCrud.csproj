@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.3.0-preview</Version>
+    <Version>1.3.0</Version>
     <Authors>Henrique Gouveia</Authors>
     <Description>Data Query Interface it's Dapper.FastCrud provider that use infraestructure provided by DataQI.Commons and it turns your Data Repositories a live interface.</Description>
     <Copyright>(c) Henrique Gouveia</Copyright>
@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper.FastCrud" Version="2.5.0.39" />
-    <PackageReference Include="DataQI.Commons" Version="1.2.0-preview" />
+    <PackageReference Include="DataQI.Commons" Version="1.2.0" />
   </ItemGroup>
 
 </Project>

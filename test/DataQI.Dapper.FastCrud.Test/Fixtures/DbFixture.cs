@@ -23,13 +23,7 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             Connection = CreateConnection();
             
             CreateTables();
-
-            // 1. Default
-            // CustomerRepository = new CustomerRepository(Connection);
-            // EmployeeRepository = new EmployeeRepository(Connection);
-            // ProductRepository = new ProductRepository(Connection);
-
-            // 2. Provided
+            
             var repositoryFactory = new DapperRepositoryFactory();
 
             CustomerRepository = repositoryFactory.GetRepository<IDapperRepository<Customer>>(Connection);

@@ -13,7 +13,7 @@ using DataQI.Dapper.FastCrud.Query.Support;
 namespace DataQI.Dapper.FastCrud.Repository.Support
 {
     public class DapperRepository<TEntity> : IDapperRepository<TEntity>
-        where TEntity : class, new()
+        where TEntity : class
     {
         protected IDbConnection connection;
 
