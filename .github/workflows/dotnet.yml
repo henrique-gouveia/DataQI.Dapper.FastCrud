@@ -31,7 +31,7 @@ jobs:
 
     # Install tools
     - name: Install tools
-      run: dotnet tool install --global dotnet-reportgenerator-globaltool
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 4.8.13
 
     # Restore
     - name: Install dependencies
