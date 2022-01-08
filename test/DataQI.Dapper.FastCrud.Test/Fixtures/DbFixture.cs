@@ -8,8 +8,10 @@ using DataQI.Dapper.FastCrud.Repository.Support;
 
 using DataQI.Dapper.FastCrud.Test.Extensions;
 using DataQI.Dapper.FastCrud.Test.Resources;
-using DataQI.Dapper.FastCrud.Test.Repository.Persons;
+using DataQI.Dapper.FastCrud.Test.Repository.Customers;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
+using DataQI.Dapper.FastCrud.Test.Repository.Employees;
+using DataQI.Dapper.FastCrud.Repository;
 
 namespace DataQI.Dapper.FastCrud.Test.Fixtures
 {
@@ -19,17 +21,14 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
         {
             OrmConfiguration.DefaultDialect = SqlDialect.SqLite;
             Connection = CreateConnection();
-
-            // 1. Default
-            // PersonRepository = new PersonRepository(Connection);
-            // ProductRepository = new ProductRepository(Connection);
-
-            // 2. Provided
-            var repositoryFactory = new DapperRepositoryFactory(Connection);
-            PersonRepository = repositoryFactory.GetRepository<IPersonRepository>();
-            ProductRepository = repositoryFactory.GetRepository<IProductRepository>();
-
+            
             CreateTables();
+            
+            var repositoryFactory = new DapperRepositoryFactory();
+
+            CustomerRepository = repositoryFactory.GetRepository<IDapperRepository<Customer>>(Connection);
+            EmployeeRepository = repositoryFactory.GetRepository<IEmployeeRepository>(() => new EmployeeRepository(Connection));
+            ProductRepository = repositoryFactory.GetRepository<IProductRepository>(Connection);
         }
 
         private IDbConnection CreateConnection() 
@@ -45,7 +44,9 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
             using (var command = Connection.CreateCommand())
             {
                 var sql = new StringBuilder()
-                    .Append(SqlResource.PERSON_CREATE_SCRIPT)
+                    .Append(SqlResource.CUSTOMER_CREATE_SCRIPT)
+                    .Append(SqlResource.DEPARTMENT_CREATE_SCRIT)
+                    .Append(SqlResource.EMPLOYEE_CREATE_SCRIT)
                     .Append(SqlResource.PRODUCT_CREATE_SCRIPT)
                     .ToString();
 
@@ -57,8 +58,8 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
 
         public IDbConnection Connection { get; }
 
-        public IPersonRepository PersonRepository { get; }
-
+        public IDapperRepository<Customer> CustomerRepository { get; }
+        public IEmployeeRepository EmployeeRepository { get; }
         public IProductRepository ProductRepository { get; }
     }
 }
