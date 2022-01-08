@@ -3,7 +3,7 @@ name: .NET
 on:
   push:
     branches: 
-      - master
+      - main
       - develop
       - 'feature/**'
       - 'hotfix/**'
@@ -11,7 +11,7 @@ on:
 
   pull_request:
     branches: 
-      - master
+      - main
       - develop
 
 jobs:
@@ -46,12 +46,12 @@ jobs:
       run: dotnet test --configuration Release --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./TestResults/'
     
     - name: Package
-      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
       run: dotnet pack --configuration Release --no-restore -o lib
 
     # Upload
     - name: Upload artifacts
-      if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
       uses: actions/upload-artifact@v2
       with:
         name: artifacts
@@ -64,7 +64,7 @@ jobs:
   verify-code:
     name: Verify Code
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
     needs: build
 
     steps:
@@ -87,7 +87,7 @@ jobs:
 
   deploy-prod:
     name: Deploy Prod
-    if: ${{ github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/release/') }}
+    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') }}
     needs: verify-code
     runs-on: ubuntu-latest
     environment:
