@@ -229,8 +229,8 @@ personRepository.AddAll(new List<Person> { person1, person2, person3 });
 
 - New! Added support to the new `RepositoryFactory` features
 - New! Added capability to invokes non-standard methods defined on client
-- Change! _TEntity_ requirements on generic interface _IDapperRepository_
-- **Break Change!** Removed _DbConnection_ as argument on _DapperRepositoryFactory_ constructor
+- Change! `TEntity` requirements on generic interface `IDapperRepository`
+- **Breaking Change!** Removed `DbConnection` as argument on `DapperRepositoryFactory` constructor
 
 **v1.1.0 - 2020/09**
 
