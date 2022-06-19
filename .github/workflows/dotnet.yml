@@ -21,17 +21,17 @@ jobs:
 
     steps:
     # checks-out repository
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     # Setup a dotnet cli and tools
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v2
       with:
-        dotnet-version: 2.2.300
+        dotnet-version: 3.1.x
 
     # Install tools
     - name: Install tools
-      run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 4.8.13
+      run: dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.9
 
     # Restore
     - name: Install dependencies
@@ -47,12 +47,12 @@ jobs:
     
     - name: Package
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
-      run: dotnet pack --configuration Release --no-restore -o lib
+      run: dotnet pack --configuration Release --no-restore -o src/DataQI.Dapper.FastCrud/lib
 
     # Upload
     - name: Upload artifacts
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: artifacts
         path: |
@@ -63,27 +63,27 @@ jobs:
 
   verify-code:
     name: Verify Code
-    runs-on: ubuntu-latest
     if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
+    runs-on: ubuntu-latest
     needs: build
 
     steps:
     # Download
     - name: Download artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: artifacts
 
     # Codecov
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v2
       with:
         # token: ${{ secrets.CODECOV_TOKEN }} # not required for public repos
         directory: ${{ github.workspace }}/test/DataQI.Dapper.FastCrud.Test/TestResults/
         flags: unittests # optional
         name: codecov-umbrella # optional
         fail_ci_if_error: true # optional (default = false)
-        # verbose: true # optional (default = false)
+        verbose: true # optional (default = false)
 
   deploy-prod:
     name: Deploy Prod
@@ -96,7 +96,7 @@ jobs:
     steps:
     # Download
     - name: Download artifacts
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v3
       with:
         name: artifacts
 

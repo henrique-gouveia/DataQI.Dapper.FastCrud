@@ -217,21 +217,29 @@ personRepository.AddAll(new List<Person> { person1, person2, person3 });
 
 ## News
 
+**v1.4.0 - 2022/06**
+
+- Change! Upgraded versions of the package references
+
+**v1.3.0 - 2022/01**
+
+- Change! Added support to the new `DataQI.Commons` features
+
 **v1.2.0 - 2022/01**
 
-* New! Added support to new Repository Factory features
-* New! Added capability to invokes non-standard methods defined on client
-* Change! _TEntity_ requirements on generic interface _IDapperRepository_
-* **Break Change!** Removed _DbConnection_ as argument on _DapperRepositoryFactory_ constructor
+- New! Added support to the new `RepositoryFactory` features
+- New! Added capability to invokes non-standard methods defined on client
+- Change! _TEntity_ requirements on generic interface _IDapperRepository_
+- **Break Change!** Removed _DbConnection_ as argument on _DapperRepositoryFactory_ constructor
 
 **v1.1.0 - 2020/09**
 
-* New! Added support to new Criteria Query API
-* New! Added Criteria Parser
+- New! Added support to new Criteria Query API
+- New! Added Criteria Parser
 
 **v1.0.0 - 2020/03**
 
-* Provided initial core base
+- Provided initial core base
 
 ## Limitations and caveats
 
