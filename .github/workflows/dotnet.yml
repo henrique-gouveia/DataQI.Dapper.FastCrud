@@ -45,6 +45,7 @@ jobs:
     - name: Test
       run: dotnet test --configuration Release --no-restore --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput='./TestResults/'
     
+    # Package
     - name: Package
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
       run: dotnet pack --configuration Release --no-restore -o src/DataQI.Dapper.FastCrud/lib
@@ -58,8 +59,9 @@ jobs:
         path: ${{ github.workspace }}/src/DataQI.Dapper.FastCrud/lib/*.nupkg
         retention-days: 5
 
-    # Codecov
+    # Coverage
     - name: Publish Coverage
+      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
       uses: codecov/codecov-action@v3
       with:
         directory: ${{ github.workspace }}/test/DataQI.Dapper.FastCrud.Test/TestResults/
@@ -86,5 +88,5 @@ jobs:
     # NuGet  
     - name: Publish nupkg
       env:
-        NUGET_AUTH_TOKEN: ${{secrets.NUGET_AUTH_TOKEN}}
-      run: dotnet nuget push --api-key $NUGET_AUTH_TOKEN --source https://api.nuget.org/v3/index.json *.nupkg
+        NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
+      run: dotnet nuget push --skip-duplicate --api-key $NUGET_AUTH_TOKEN --source https://api.nuget.org/v3/index.json *.nupkg
