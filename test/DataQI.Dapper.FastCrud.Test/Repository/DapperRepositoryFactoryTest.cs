@@ -10,7 +10,7 @@ using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository
 {
-    public class DapperRepositoryFactoryTest : IClassFixture<DbFixture>
+    public sealed class DapperRepositoryFactoryTest : IClassFixture<DbFixture>
     {
         private readonly IDbConnection connection;
         private readonly DapperRepositoryFactory repositoryFactory;

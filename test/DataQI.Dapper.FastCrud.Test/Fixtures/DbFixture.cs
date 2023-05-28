@@ -1,6 +1,6 @@
 using System.Text;
 using System.Data;
-using System.Data.SQLite;
+using Microsoft.Data.Sqlite;
 
 using Dapper.FastCrud;
 
@@ -15,7 +15,7 @@ using DataQI.Dapper.FastCrud.Repository;
 
 namespace DataQI.Dapper.FastCrud.Test.Fixtures
 {
-    public class DbFixture
+    public sealed class DbFixture
     {
         public DbFixture()
         {
@@ -33,27 +33,25 @@ namespace DataQI.Dapper.FastCrud.Test.Fixtures
 
         private IDbConnection CreateConnection() 
         {
-            var connection = new SQLiteConnection("Data Source=:memory:");
+            var connection = new SqliteConnection("Data Source=:memory:");
             connection.Open();
-
+            
             return connection;
         }
 
         private void CreateTables()
         {
-            using (var command = Connection.CreateCommand())
-            {
-                var sql = new StringBuilder()
-                    .Append(SqlResource.CUSTOMER_CREATE_SCRIPT)
-                    .Append(SqlResource.DEPARTMENT_CREATE_SCRIT)
-                    .Append(SqlResource.EMPLOYEE_CREATE_SCRIT)
-                    .Append(SqlResource.PRODUCT_CREATE_SCRIPT)
-                    .ToString();
+            using var command = Connection.CreateCommand();
+            var sql = new StringBuilder()
+                .Append(SqlResource.CUSTOMER_CREATE_SCRIPT)
+                .Append(SqlResource.DEPARTMENT_CREATE_SCRIT)
+                .Append(SqlResource.EMPLOYEE_CREATE_SCRIT)
+                .Append(SqlResource.PRODUCT_CREATE_SCRIPT)
+                .ToString();
 
-                command
-                    .AddCommandText(sql)
-                    .PrepareAndExecuteNonQuery();
-            }
+            command
+                .AddCommandText(sql)
+                .PrepareAndExecuteNonQuery();
         }
 
         public IDbConnection Connection { get; }

@@ -12,7 +12,7 @@ using DataQI.Dapper.FastCrud.Test.Repository.Employees;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository
 {
-    public class DapperRepositoryCustomizedMethodTest : IClassFixture<DbFixture>, IDisposable
+    public sealed class DapperRepositoryCustomizedMethodTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
         private readonly IEmployeeRepository employeeRepository;
@@ -42,16 +42,16 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         public void TestFindByDepartmentName()
         {
             var employeeList = InsertTestEmployeesList();
-            var employeeEnumerator = employeeList.GetEnumerator();
+            using var employeeEnumerator = employeeList.GetEnumerator();
 
             while (employeeEnumerator.MoveNext())
             {
                 var employee = employeeEnumerator.Current;
                 var employeesExpected = employeeList.Where(e => e.Department.Name.StartsWith(employee.Department.Name));
 
-                var products = employeeRepository.FindByDepartmentName(employee.Department.Name);
+                var employees = employeeRepository.FindByDepartmentName(employee.Department.Name);
 
-                employeesExpected.ToExpectedObject().ShouldMatch(products);
+                employeesExpected.ToExpectedObject().ShouldMatch(employees);
             }
         }
 
@@ -86,13 +86,12 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         #region IDisposable Support
         private bool disposedValue = false;
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 connection.BulkDelete<Employee>();
                 connection.BulkDelete<Department>();
-
                 disposedValue = true;
             }
         }

@@ -13,7 +13,7 @@ using DataQI.Dapper.FastCrud.Test.Repository.Products;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository
 {
-    public class DapperRepositoryQueryMethodTest : IClassFixture<DbFixture>, IDisposable
+    public sealed class DapperRepositoryQueryMethodTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
         private readonly IProductRepository productRepository;
@@ -61,7 +61,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         public void TestFindByNameLikeAndStockGreaterThan()
         {
             var productList = InsertTestProductsList();
-            var productEnumerator = productList.GetEnumerator();
+            using var productEnumerator = productList.GetEnumerator();
 
             while (productEnumerator.MoveNext())
             {
@@ -81,7 +81,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             var productList = InsertTestProductsList();
 
             var departments = productList.Select(p => p.Department);
-            var productEnumerator = productList.GetEnumerator();
+            using var productEnumerator = productList.GetEnumerator();
 
             while (productEnumerator.MoveNext())
             {
@@ -101,7 +101,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         public void TestFindByKeywordsLikeAndActive()
         {
             var productList = InsertTestProductsList();
-            var productEnumerator = productList.GetEnumerator();
+            using var productEnumerator = productList.GetEnumerator();
 
             while (productEnumerator.MoveNext())
             {
@@ -143,12 +143,11 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         #region IDisposable Support
         private bool disposedValue = false;
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 connection.BulkDelete<Product>();
-
                 disposedValue = true;
             }
         }

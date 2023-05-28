@@ -243,7 +243,6 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             if (!disposedValue)
             {
                 connection.BulkDelete<Customer>();
-
                 disposedValue = true;
             }
         }
