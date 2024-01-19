@@ -1,7 +1,9 @@
 /.vs
 /.vscode
 /.devcontainer
+/.idea
 /packages
+.DS_Store
 bin
 obj
 lib

@@ -9,7 +9,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>Data Query Interface Provider for Dapper.FastCrud</PackageTags>
+    <PackageTags>Dapper.FastCrud Repository Interface Pattern</PackageTags>
     <PackageProjectUrl>https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud</PackageProjectUrl>
     <Product />
   </PropertyGroup>
