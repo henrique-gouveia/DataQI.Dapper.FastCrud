@@ -17,7 +17,7 @@ builder.Services.AddSingleton<IDbConnection>(_ =>
     return connection;
 });
 
-// DataQI
+// DataQI - If you are using version 1.4.x ou lower, you can do that...
 builder.Services.AddScoped<DapperRepositoryFactory>();
 
 builder.Services.AddScoped(sp =>
@@ -26,6 +26,17 @@ builder.Services.AddScoped(sp =>
     var repositoryFactory = sp.GetRequiredService<DapperRepositoryFactory>();
     return repositoryFactory.GetRepository<IEntityRepository>(dbConnection);
 });
+
+// DataQI - If you are using version 1.5.x or higher, you can do that...
+
+// It'll add IDapperRepository<Entity> repository service...
+// builder.Services.AddDefaultDapperRepository<Entity, IDbConnection>();
+
+// It'll add IEntityRepository repository service...
+// builder.Services.AddDapperRepository<IEntityRepository, IDbConnection>();
+
+// It'll add IEntityRepository repository service supported by EntityRepository ...
+// builder.Services.AddDapperRepository<IEntityRepository, EntityRepository, IDbConnection>();
 
 var app = builder.Build();
 
