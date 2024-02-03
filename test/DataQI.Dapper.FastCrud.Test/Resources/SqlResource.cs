@@ -34,7 +34,7 @@ namespace DataQI.Dapper.FastCrud.Test.Resources
                 [HIRE_DATE] DATETIME,
                 [PHONE_NUMBER] VARCHAR(15),
                 [EMAIL] VARCHAR(30),
-                FOREIGN KEY ([DEPARTMENT_ID]) REFERENCES [EMPLOYEE] ([DEPARTMENT_ID]) 
+                FOREIGN KEY ([DEPARTMENT_ID]) REFERENCES [DEPARTMENT] ([DEPARTMENT_ID]) 
 		        ON DELETE NO ACTION ON UPDATE NO ACTION
             );";
 

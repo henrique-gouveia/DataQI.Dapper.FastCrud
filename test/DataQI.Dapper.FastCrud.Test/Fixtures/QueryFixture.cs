@@ -6,7 +6,7 @@ using Moq;
 
 namespace DataQI.Dapper.FastCrud.Test.Fixtures
 {
-    public class QueryFixture
+    public sealed class QueryFixture
     {
         private readonly Mock<IDapperCommandBuilder> commandBuilderMoq;
         private readonly ICollection<int> parameters;
