@@ -2,17 +2,20 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading.Tasks;
 
-using Dapper.FastCrud;  
+using Dapper.FastCrud;
+using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 using Xunit;
 using ExpectedObjects;
 
+using DataQI.Commons.Query;
+using DataQI.Commons.Query.Support;
+
 using DataQI.Dapper.FastCrud.Repository;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Customers;
-using DataQI.Commons.Query;
-using DataQI.Commons.Query.Support;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository
 {
@@ -25,6 +28,26 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         {
             connection = fixture.Connection;
             customerRepository = fixture.CustomerRepository;
+        }
+        
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestInsertRejectsNullEntity(bool useAsyncMethod)
+        {
+            try
+            {
+                if (useAsyncMethod)
+                    await customerRepository.InsertAsync(null);
+                else
+                    customerRepository.Insert(null);
+            }
+            catch (Exception e)
+            {
+                var baseException = e.GetBaseException();
+                Assert.IsType<ArgumentException>(baseException);
+                Assert.Equal("Entity must not be null", baseException.Message);
+            }
         }
 
         [Theory]
@@ -44,7 +67,27 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             Assert.True(customerExpected.Id > 0);
             Assert.Equal(countExpected, connection.Count<Customer>());
         }
-
+        
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestSaveRejectsNullEntity(bool useAsyncMethod)
+        {
+            try
+            {
+                if (useAsyncMethod)
+                    await customerRepository.SaveAsync(null);
+                else
+                    customerRepository.Save(null);
+            }
+            catch (Exception e)
+            {
+                var baseException = e.GetBaseException();
+                Assert.IsType<ArgumentException>(baseException);
+                Assert.Equal("Entity must not be null", baseException.Message);
+            }
+        }
+        
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
@@ -98,11 +141,86 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             var customerExists = ExistsCustomer(new Customer(), useAsyncMethod);
             Assert.False(customerExists);
         }
+                
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestFindRejectsNullStatementBuilder(bool useAsyncMethod)
+        {
+            try
+            {
+                Func<
+                    IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<Customer>,
+                    IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<Customer>
+                > statementBuilder = null;
+                if (useAsyncMethod)
+                    await customerRepository.FindAsync(statementBuilder);
+                else
+                    customerRepository.Find(statementBuilder);
+            }
+            catch (Exception e)
+            {
+                var baseException = e.GetBaseException();
+                Assert.IsType<ArgumentException>(baseException);
+                Assert.Equal("StatementBuilder must not be null", baseException.Message);
+            }
+        }
 
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void TestFind(bool useAsyncMethod)
+        public void TestFindByStatementBuilder(bool useAsyncMethod)
+        {
+            var customersList = InsertTestCustomersList();
+            using var customersEnumerator = customersList.GetEnumerator();
+            while (customersEnumerator.MoveNext())
+            {
+                var customer = customersEnumerator.Current;
+                var customersExpected = customersList
+                    .Where(c => c.Document == customer?.Document);
+
+                Func<
+                    IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<Customer>,
+                    IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<Customer>
+                > statementBuilder = statement => statement
+                    .Where($"{nameof(Customer.Document):C} = @Document")
+                    .WithParameters(new { customer?.Document });
+
+                IEnumerable<Customer> customers;
+                if (useAsyncMethod)
+                    customers = customerRepository.FindAsync(statementBuilder).Result;
+                else
+                    customers = customerRepository.Find(statementBuilder);
+                
+                customersExpected.ToExpectedObject().ShouldMatch(customers);
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestFindRejectsNullCriteria(bool useAsyncMethod)
+        {
+            try
+            {
+                Func<ICriteria, ICriteria> criteriaBuilder = null;
+                if (useAsyncMethod)
+                    await customerRepository.FindAsync(criteriaBuilder);
+                else
+                    customerRepository.Find(criteriaBuilder);
+            }
+            catch (Exception e)
+            {
+                var baseException = e.GetBaseException();
+                Assert.IsType<ArgumentException>(baseException);
+                Assert.Equal("CriteriaBuilder must not be null", baseException.Message);
+            }
+        }
+        
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindByCriteria(bool useAsyncMethod)
         {
             var customersList = InsertTestCustomersList();
             var customersEnumerator = customersList.GetEnumerator();

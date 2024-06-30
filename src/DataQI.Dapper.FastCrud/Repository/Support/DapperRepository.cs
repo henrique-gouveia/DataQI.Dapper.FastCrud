@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
+using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 using DataQI.Commons.Query;
 using DataQI.Commons.Util;
@@ -49,7 +50,31 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var entity = await FindOneAsync(id, cancellationToken);
             return entity != null;
         }
-        
+
+        public IEnumerable<TEntity> Find(
+            Func<
+                IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>,
+                IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>
+            > statementBuilder)
+        {
+            Assert.NotNull(statementBuilder, "StatementBuilder must not be null");
+            var entities = connection.Find<TEntity>(statement =>
+                statementBuilder(statement));
+            return entities;
+        }
+
+        public async Task<IEnumerable<TEntity>> FindAsync(
+            Func<
+                IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>,
+                IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>
+            > statementBuilder, CancellationToken cancellationToken = default)
+        {
+            Assert.NotNull(statementBuilder, "StatementBuilder must not be null");
+            var entities = await connection.FindAsync<TEntity>(statement =>
+                statementBuilder(statement));
+            return entities;
+        }
+
         public IEnumerable<TEntity> Find(Func<ICriteria, ICriteria> criteriaBuilder)
         {
             Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
