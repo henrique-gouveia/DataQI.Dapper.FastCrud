@@ -42,15 +42,12 @@ public class Person
     public boolean Active { get; set; }
 }
 
-public interface IPersonRepository : IDapperRepository<Person>
-{
-
-}
+public interface IPersonRepository : IDapperRepository<Person> { }
 ```
 
 ### Instancing a Repository
 
-Should to use a instance of the `DapperRepositoryFactory` class to instantiate a Repository, localizated in the namespace `DataQI.Dapper.FastCrud.Repository.Support`, that requires a `IDbConnection` to make its calls:
+You must use an instance of the `DapperRepositoryFactory` class to instantiate a Repository, located in the `DataQI.Dapper.FastCrud.Repository.Support` namespace, which requires an `IDbConnection` to make its calls:
 
 ```csharp
 IDbConnection connection = CreateConnection();
@@ -101,6 +98,17 @@ Take a look at the [Samples](https://github.com/henrique-gouveia/DataQI.Dapper.F
 
 A Repository Interface that extends `IDapperRepository<TEntity>` inherit its standard operations:
 
+| **Operation** | **Methods**
+|-------------|------------
+| **Delete** | Delete, DeleteAsync
+| **Exists** | Exists, ExistsAsync
+| **Find Single** | FindOne, FindOneAsync
+| **Find Many** | Find, FindAsync, FindAll, FindAllAsync
+| **Insert** | Insert, InsertAsync
+| **Insert** or **Update** | Save, SaveAsync
+
+#### Sample
+
 ```csharp
 personRepository.Insert(person);
 await personRepository.InsertAsync(person);
@@ -119,30 +127,6 @@ allPersons = await personRepository.FindAllAsync();
 
 var onePerson = personRepository.FindOne(new Person{ Id = 1 });
 onePerson = await personRepository.FindOneAsync(new Person{ Id = 1 });
-```
-
-### Using Criteria Definitions
-
-Customized Queries can be specified by a simple Criteria Query API where are the main artifacts is localized in the namespace `DataQI.Common.Query` and `DataQI.Common.Query.Support`.
-
-```csharp
-var personsByCriteria = personRepository.Find(criteria =>
-    criteria
-        .Add(Restrictions.Like("FirstName", "Name%"))
-        .Add(Restrictions
-            .Disjuction()
-            .Add(Restrictions.Between("BirthDate", new DateTime(2015, 1, 1), new DateTime(2020, 1, 1)))
-            .Add(Restrictions.Equal("Active", true)))
-    );
-
-var personsByCriteriaAsync = await personRepository.FindAsync(criteria =>
-    criteria
-        .Add(Restrictions.Like("LastName", "%Name%"))
-        .Add(Restrictions
-            .Disjuction()
-            .Add(Restrictions.Between("BirthDate", new DateTime(2015, 1, 1), new DateTime(2020, 1, 1)))
-            .Add(Restrictions.GreaterThan("RegisterDate", new DateTime(2019, 1, 1))))
-    );
 ```
 
 ### Using Query Methods
@@ -203,6 +187,74 @@ persons = personRepository.FindByBirthDateBetween(new DateTime(2015, 1, 1), new 
 persons = personRepository.FindByFirstNameLikeAndActive(string name, bool active = true);
 persons = personRepository.FindByEmailLikeOrPhoneNotNull(string email);
 persons = personRepository.FindFindByFirstNameAndLastNameOrBirthDateGreaterThan("A First Name", "A Last Name", new DateTime(2019, 1, 1));
+```
+
+### Using Statement Builder
+
+Customized Queries can be specified by using the `Dapper.FastCrud` statement builder API.
+
+```csharp
+var persons = personRepository.Find(statement => statement 
+        .Where($@"
+            {nameof(Person.FirstName)} like @FirstName}
+            AND (
+                {nameof(Person.BirthDate)} BETWEEN @StartDate AND @EndDate) 
+                OR {nameof(Person.RegisterDate)} > @RegisterDate
+            )")
+        .OrderBy($"{nameof(Person.FirstName)}")
+        .Skip(0)
+        .Top(20)
+        .WithParameters(new 
+        {
+            FirstName = "%Name%",
+            StartDate = new DateTime(2015, 1, 1),
+            EndDate = new DateTime(2020, 1, 1),
+            RegisterDate = new DateTime(2019, 1, 1)
+        })
+    );
+
+var persons = await personRepository.FindAsync(statement => statement 
+        .Where($@"
+            {nameof(Person.FirstName)} like @FirstName}
+            AND (
+                {nameof(Person.BirthDate)} BETWEEN @StartDate AND @EndDate) 
+                OR {nameof(Person.RegisterDate)} > @RegisterDate
+            )")
+        .OrderBy($"{nameof(Person.FirstName)}")
+        .Skip(1)
+        .Top(20)
+        .WithParameters(new 
+        {
+            FirstName = "%Name%",
+            StartDate = new DateTime(2015, 1, 1),
+            EndDate = new DateTime(2020, 1, 1),
+            RegisterDate = new DateTime(2019, 1, 1)
+        })
+    );
+```
+
+### Using Criteria Definitions
+
+Customized Queries can be specified by a simple Criteria Query API where are the main artifacts is localized in the namespace `DataQI.Common.Query` and `DataQI.Common.Query.Support`.
+
+```csharp
+var personsByCriteria = personRepository.Find(criteria =>
+    criteria
+        .Add(Restrictions.Like("FirstName", "Name%"))
+        .Add(Restrictions
+            .Disjuction()
+            .Add(Restrictions.Between("BirthDate", new DateTime(2015, 1, 1), new DateTime(2020, 1, 1)))
+            .Add(Restrictions.Equal("Active", true)))
+    );
+
+var personsByCriteriaAsync = await personRepository.FindAsync(criteria =>
+    criteria
+        .Add(Restrictions.Like("LastName", "%Name%"))
+        .Add(Restrictions
+            .Disjuction()
+            .Add(Restrictions.Between("BirthDate", new DateTime(2015, 1, 1), new DateTime(2020, 1, 1)))
+            .Add(Restrictions.GreaterThan("RegisterDate", new DateTime(2019, 1, 1))))
+    );
 ```
 
 ### Using Customized Methods
@@ -292,6 +344,11 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
 The DataQI FastCrud Provider library is not an ORM or it attempts to solve all data persistence problems. It provides a structure based on Repository Pattern that facilitates the rapid creation of repositories with methods that allow the creation, modification and deletion of data, as well as the preparation of simple queries by signing the methods declared in an interface, in order to avoid most of the effort involved in writing standard code in projects that use the [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) library.
 
 ## Release notes
+
+**v2.0.0 - 2024/12**
+
+- New! Added support to the `Dapper.FastCrud` statement builder
+- Change! Upgraded version of `DataQI.Commons` to the `2.0.0` to support new features
 
 **v1.5.0 - 2023/01**
 

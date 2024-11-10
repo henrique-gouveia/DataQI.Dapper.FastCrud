@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
+
 using DataQI.Commons.Repository;
 
 namespace DataQI.Dapper.FastCrud.Repository

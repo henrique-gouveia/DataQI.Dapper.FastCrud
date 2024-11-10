@@ -4,15 +4,11 @@ on:
   push:
     branches: 
       - main
-      - develop
       - 'feature/**'
       - 'hotfix/**'
       - 'release/**'
-
-  pull_request:
-    branches: 
-      - main
-      - develop
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -21,11 +17,11 @@ jobs:
 
     steps:
     # checks-out repository
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     # Setup a dotnet cli and tools
     - name: Setup .NET
-      uses: actions/setup-dotnet@v2
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 6.x
 
@@ -47,32 +43,36 @@ jobs:
     
     # Package
     - name: Package
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
-      run: dotnet pack --configuration Release --no-restore -o src/DataQI.Dapper.FastCrud/lib
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      run: dotnet pack -p:PackageVersion=${{ env.PACKAGE_VERSION }} --configuration Release --no-restore -o src/DataQI.Dapper.FastCrud/lib
+      env:
+        PACKAGE_VERSION: ${{ github.ref_name }}
 
     # Upload
     - name: Publish Artifacts
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
-      uses: actions/upload-artifact@v3
+      if: ${{ startsWith(github.ref, 'refs/tags/') }}
+      uses: actions/upload-artifact@v4
       with:
         name: artifacts
         path: ${{ github.workspace }}/src/DataQI.Dapper.FastCrud/lib/*.nupkg
-        retention-days: 5
+        retention-days: 7
 
     # Coverage
     - name: Publish Coverage
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/hotfix/') || startsWith(github.ref, 'refs/heads/release/') }}
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         directory: ${{ github.workspace }}/test/DataQI.Dapper.FastCrud.Test/TestResults/
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: true
         verbose: true
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   deploy-nuget:
     name: Deploy Nuget
-    if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/') }}
+    if: ${{ startsWith(github.ref, 'refs/tags/') }}
     needs: build
     runs-on: ubuntu-latest
     environment:
@@ -81,7 +81,7 @@ jobs:
     steps:
     # Download
     - name: Download artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: artifacts
 
