@@ -1,6 +1,6 @@
 # DataQI Dapper.FastCrud
 
-Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers making possible the definition repository interfaces, providing behaviors for standard operations as well to defines customized queries through method signatures.
+Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers, making possible the definition of repository interfaces, providing behaviors for standard operations as well as to define customized queries through method signatures.
 
 [![Build](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/actions/workflows/dotnet.yml/badge.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/actions/workflows/dotnet.yml)
 [![codecov](https://codecov.io/gh/henrique-gouveia/DataQI.Dapper.FastCrud/branch/main/graph/badge.svg)](https://codecov.io/gh/henrique-gouveia/DataQI.Dapper.FastCrud)
@@ -11,7 +11,7 @@ Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm
 
 ### Installing
 
-This library can add in to the project by way:
+This library can add in to the project by the way:
 
     dotnet add package DataQI.Dapper.FastCrud
 
@@ -19,7 +19,7 @@ See [Nuget](https://www.nuget.org/packages/DataQI.Dapper.FastCrud) for other opt
 
 ### Defining a Repository
 
-A Repository Interface should extends the interface `IDapperRepository<TEntity>` localized in the namespace `DataQI.Dapper.FastCrud.Repository`, where the `TEntity` is a _Plain Old CSharp Object (POCO)_.
+A Repository Interface should extend the interface `IDapperRepository<TEntity>` localized in the namespace `DataQI.Dapper.FastCrud.Repository`, where the `TEntity` is a _Plain Old CSharp Object (POCO)_.
 
 ```csharp
 [Table("Person")]
@@ -47,7 +47,7 @@ public interface IPersonRepository : IDapperRepository<Person> { }
 
 ### Instancing a Repository
 
-You must use an instance of the `DapperRepositoryFactory` class to instantiate a Repository, located in the `DataQI.Dapper.FastCrud.Repository.Support` namespace, which requires an `IDbConnection` to make its calls:
+You must use an instance of the `DapperRepositoryFactory` class to instantiate a Repository, located in the `DataQI.Dapper.FastCrud.Repository.Support` namespace, which requires a `IDbConnection` to make its calls:
 
 ```csharp
 IDbConnection connection = CreateConnection();
@@ -98,14 +98,14 @@ Take a look at the [Samples](https://github.com/henrique-gouveia/DataQI.Dapper.F
 
 A Repository Interface that extends `IDapperRepository<TEntity>` inherit its standard operations:
 
-| **Operation** | **Methods**
-|-------------|------------
-| **Delete** | Delete, DeleteAsync
-| **Exists** | Exists, ExistsAsync
-| **Find Single** | FindOne, FindOneAsync
-| **Find Many** | Find, FindAsync, FindAll, FindAllAsync
-| **Insert** | Insert, InsertAsync
-| **Insert** or **Update** | Save, SaveAsync
+| **Operation**            | **Methods**                            |
+|--------------------------|----------------------------------------|
+| **Delete**               | Delete, DeleteAsync                    |
+| **Exists**               | Exists, ExistsAsync                    |
+| **Find Single**          | FindOne, FindOneAsync                  |
+| **Find Many**            | Find, FindAsync, FindAll, FindAllAsync |
+| **Insert**               | Insert, InsertAsync                    |
+| **Insert** or **Update** | Save, SaveAsync                        |
 
 #### Sample
 
@@ -134,36 +134,36 @@ onePerson = await personRepository.FindOneAsync(new Person{ Id = 1 });
 Customized Queries can be defined through method signatures with the following conventions:
 
 - The method name can be initiated with the prefix `FindBy`.
-- Next step, should be indicated the field that will be want to apply a operator.
+- The next step should be indicated the field that will be want to apply an operator.
 - After the field name, should be indicated the operator (column `Operador` from the table below). The `Equal` is assumed how default operator if nothing it's indicate.
-- Finaly, each sentence composition can be combined with anothers through of the `Conjunctions` _AND_ and `Disjunction` _OR_.
+- Finally, each sentence composition can be combined with another through of the `Conjunctions` _AND_ and `Disjunction` _OR_.
 
 #### Supported keywords inside method names
 
-| **Keyword** | **Sample** | **Fragment**
-|-------------|------------|-------------
-| **Equal** | FindByName, FindByName**Equal** | where Name **=** @0
-| **NotEqual** | FindByName**Not**, FindByName**NotEqual** | where Name **<>** @0
-| **Between** | FindByAge**Between** | where Age **between** @0 **and** @1
-| **NotBetween** | FindByAge**NotBetween** | where Age **not between** @0 **and** @1
-| **GreaterThan** | FindByBirthDate**GreaterThan** | where BirthDate **>** @0
-| **GreaterThanEqual** | FindByBirthDate**GreaterThanEqual** | where BirthDate **>=** @0
-| **LessThan** | FindByBirthDate**LessThan** | where BirthDate **<** @0
-| **LessThanEqual** | FindByBirthDate**LessThanEqual** | where BirthDate **<=** @0
-| **In** | FindByAddressType**In** | where AddressType **in** (@0)
-| **NotIn** | FindByAddressType**NotIn** | where AddressType **not in** (@0)
-| **Null** | FindByEmail**Null** | where Email **is null**
-| **NotNull** | FindByEmail**NotNull** | where Email **is not null**
-| **StartingWith** | FindByName**StartingWith** | where Name **like** @0
-| **NotStartingWith** | FindByName**NotStartingWith** | where Name **not like** @0
-| **EndingWith** | FindByName**EndingWith** | where Name **like** @0
-| **NotEndingWith** | FindByName**NotEndingWith** | where Name **not like** @0
-| **Containing** | FindByName**Containing** | where Name **like** @0
-| **NotContaining** | FindByName**NotContaining** | where Name **not like** @0
-| **Like** | FindByName**Like** | where Name **like** @0
-| **NotLike** | FindByName**NotLike** | where Name **not like** @0
-| **And** | FindByName**And**Email | where (Name = @0 **and** Email = @1)
-| **Or** | FindByName**Or**Email | where (Name = @0 **or** Email = @1)
+| **Keyword**          | **Sample**                                | **Fragment**                            |
+|----------------------|-------------------------------------------|-----------------------------------------|
+| **Equal**            | FindByName, FindByName**Equal**           | where Name **=** @0                     |
+| **NotEqual**         | FindByName**Not**, FindByName**NotEqual** | where Name **<>** @0                    |
+| **Between**          | FindByAge**Between**                      | where Age **between** @0 **and** @1     |
+| **NotBetween**       | FindByAge**NotBetween**                   | where Age **not between** @0 **and** @1 |
+| **GreaterThan**      | FindByBirthDate**GreaterThan**            | where BirthDate **>** @0                |
+| **GreaterThanEqual** | FindByBirthDate**GreaterThanEqual**       | where BirthDate **>=** @0               |
+| **LessThan**         | FindByBirthDate**LessThan**               | where BirthDate **<** @0                |
+| **LessThanEqual**    | FindByBirthDate**LessThanEqual**          | where BirthDate **<=** @0               |
+| **In**               | FindByAddressType**In**                   | where AddressType **in** (@0)           |
+| **NotIn**            | FindByAddressType**NotIn**                | where AddressType **not in** (@0)       |
+| **Null**             | FindByEmail**Null**                       | where Email **is null**                 |
+| **NotNull**          | FindByEmail**NotNull**                    | where Email **is not null**             |
+| **StartingWith**     | FindByName**StartingWith**                | where Name **like** @0                  |
+| **NotStartingWith**  | FindByName**NotStartingWith**             | where Name **not like** @0              |
+| **EndingWith**       | FindByName**EndingWith**                  | where Name **like** @0                  |
+| **NotEndingWith**    | FindByName**NotEndingWith**               | where Name **not like** @0              |
+| **Containing**       | FindByName**Containing**                  | where Name **like** @0                  |
+| **NotContaining**    | FindByName**NotContaining**               | where Name **not like** @0              |
+| **Like**             | FindByName**Like**                        | where Name **like** @0                  |
+| **NotLike**          | FindByName**NotLike**                     | where Name **not like** @0              |
+| **And**              | FindByName**And**Email                    | where (Name = @0 **and** Email = @1)    |
+| **Or**               | FindByName**Or**Email                     | where (Name = @0 **or** Email = @1)     |
 
 #### Sample
 
@@ -324,7 +324,7 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
   Dry    : .NET 6.0.3 (6.0.322.12309), X64 RyuJIT AVX2
 
 ```
-| Lib           | Method               | Note                     | Op Count | Mean       | StdDev    | Error     | Gen0     | Gen1     | Gen2    | Allocated  | 
+| Lib           | Method               | Note                     | Op Count |       Mean |    StdDev |     Error |     Gen0 |     Gen1 |    Gen2 |  Allocated | 
 |---------------|----------------------|--------------------------|---------:|-----------:|----------:|----------:|---------:|---------:|--------:|-----------:|
 | Pure FastCrud | FindAll&lt;T&gt;     | Select ~10,000 rows / op |   10,000 | 20.1429 ms | 1.3392 ms | 1.1629 ms | 448.0000 | 202.0000 | 76.0000 | 2474.94 KB |
 | DataQI        | FindAll&lt;T&gt;     | Select ~10,000 rows / op |   10,000 | 20.1434 ms | 1.3489 ms | 1.1713 ms | 444.0000 | 194.0000 | 72.0000 | 2475.01 KB |
@@ -341,7 +341,7 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
 
 ## Limitations and caveats
 
-The DataQI FastCrud Provider library is not an ORM or it attempts to solve all data persistence problems. It provides a structure based on Repository Pattern that facilitates the rapid creation of repositories with methods that allow the creation, modification and deletion of data, as well as the preparation of simple queries by signing the methods declared in an interface, in order to avoid most of the effort involved in writing standard code in projects that use the [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) library.
+The DataQI FastCrud Provider library is not an ORM, or it attempts to solve all data persistence problems. It provides a structure based on Repository Pattern that facilitates the rapid creation of repositories with methods that allow the creation, modification and deletion of data, as well as the preparation of simple queries by signing the methods declared in an interface, in order to avoid most of the effort involved in writing standard code in projects that use the [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) library.
 
 ## Release notes
 
@@ -367,13 +367,13 @@ The DataQI FastCrud Provider library is not an ORM or it attempts to solve all d
 **v1.2.0 - 2022/01**
 
 - New! Added support to the new `RepositoryFactory` features
-- New! Added capability to invokes non-standard methods defined on client
+- New! Added the ability to invoke non-standard methods defined on a client
 - Change! `TEntity` requirements on generic interface `IDapperRepository`
 - **Breaking Change!** Removed `DbConnection` as argument on `DapperRepositoryFactory` constructor
 
 **v1.1.0 - 2020/09**
 
-- New! Added support to new Criteria Query API
+- New! Added support to the new Criteria Query API
 - New! Added Criteria Parser
 
 **v1.0.0 - 2020/03**
