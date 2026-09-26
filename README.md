@@ -204,6 +204,21 @@ var persons = await personRepository.FindByLastNameAsync("A Last Name");
 persons = await personRepository.FindByLastNameAsync("A Last Name", cancellationToken);
 ```
 
+### Using Single-Entity Query Methods
+
+Query Methods can also be declared to return a single entity directly (`TEntity` or `Task<TEntity>`) instead of a collection. Zero matches returns `null`; more than one match throws `InvalidOperationException`.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    Person FindByEmail(string email);
+    Task<Person> FindByEmailAsync(string email);
+}
+
+var person = personRepository.FindByEmail("person@example.com");
+person = await personRepository.FindByEmailAsync("person@example.com");
+```
+
 ### Using Statement Builder
 
 Customized Queries can be specified by using the `Dapper.FastCrud` statement builder API.

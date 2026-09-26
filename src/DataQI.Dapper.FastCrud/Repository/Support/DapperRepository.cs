@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -98,6 +99,31 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
                 .Where(dapperCommand.Command)
                 .WithParameters(dapperCommand.Values));
             return entities;
+        }
+
+        public TEntity FindOne(Func<ICriteria, ICriteria> criteriaBuilder)
+        {
+            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
+            var criteria = new DapperCriteria();
+            criteriaBuilder(criteria);
+            var dapperCommand = criteria.BuildCommand();
+            var entities = connection.Find<TEntity>(statement => statement
+                .Where(dapperCommand.Command)
+                .WithParameters(dapperCommand.Values));
+            return entities.SingleOrDefault();
+        }
+
+        public async Task<TEntity> FindOneAsync(Func<ICriteria, ICriteria> criteriaBuilder,
+            CancellationToken cancellationToken = default)
+        {
+            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
+            var criteria = new DapperCriteria();
+            criteriaBuilder(criteria);
+            var dapperCommand = criteria.BuildCommand();
+            var entities = await connection.FindAsync<TEntity>(statement => statement
+                .Where(dapperCommand.Command)
+                .WithParameters(dapperCommand.Values));
+            return entities.SingleOrDefault();
         }
 
         public IEnumerable<TEntity> FindAll()

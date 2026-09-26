@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,6 +25,79 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         {
             connection = fixture.Connection;
             productRepository = fixture.ProductRepository;
+        }
+
+        [Fact]
+        public void TestFindByEan()
+        {
+            var productsExpected = InsertTestProducts();
+
+            while (productsExpected.MoveNext())
+            {
+                var productExpected = productsExpected.Current;
+                var product = productRepository.FindByEan(productExpected.Ean);
+
+                productExpected.ToExpectedObject().ShouldMatch(product);
+            }
+        }
+
+        [Fact]
+        public async Task TestFindByEanAsync()
+        {
+            var productsExpected = InsertTestProducts();
+
+            while (productsExpected.MoveNext())
+            {
+                var productExpected = productsExpected.Current;
+                var product = await productRepository.FindByEanAsync(productExpected.Ean);
+
+                productExpected.ToExpectedObject().ShouldMatch(product);
+            }
+        }
+
+        [Fact]
+        public void TestFindByEanReturnsNullWhenNotFound()
+        {
+            var product = productRepository.FindByEan("non-existent-ean");
+            Assert.Null(product);
+        }
+
+        [Fact]
+        public async Task TestFindByEanAsyncReturnsNullWhenNotFound()
+        {
+            var product = await productRepository.FindByEanAsync("non-existent-ean");
+            Assert.Null(product);
+        }
+
+        [Fact]
+        public void TestFindOneThrowsWhenMultipleMatches()
+        {
+            const string duplicateEan = "9999999999999";
+            var firstProduct = ProductBuilder.NewInstance().SetEan(duplicateEan).Build();
+            var secondProduct = ProductBuilder.NewInstance().SetEan(duplicateEan).Build();
+
+            productRepository.Save(firstProduct);
+            productRepository.Save(secondProduct);
+
+            var exception = Assert.Throws<TargetInvocationException>(() =>
+                productRepository.FindByEan(duplicateEan));
+
+            Assert.IsType<InvalidOperationException>(exception.GetBaseException());
+            Assert.Equal("Sequence contains more than one element", exception.GetBaseException().Message);
+        }
+
+        [Fact]
+        public async Task TestFindByEanAsyncThrowsWhenMultipleMatches()
+        {
+            const string duplicateEan = "8888888888888";
+            var firstProduct = ProductBuilder.NewInstance().SetEan(duplicateEan).Build();
+            var secondProduct = ProductBuilder.NewInstance().SetEan(duplicateEan).Build();
+
+            productRepository.Save(firstProduct);
+            productRepository.Save(secondProduct);
+
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                productRepository.FindByEanAsync(duplicateEan));
         }
 
         [Fact]
