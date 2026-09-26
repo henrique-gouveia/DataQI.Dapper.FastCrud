@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Dapper.FastCrud;
 using DataQI.Dapper.FastCrud.Repository.Support;
@@ -15,6 +17,24 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
         public IEnumerable<Product> FindByEanLike(string ean)
         {
             var products = connection.Find<Product>(statement => statement
+                .Where($"({nameof(Product.Ean):C} LIKE @ean)")
+                .WithParameters(new { ean }));
+
+            return products;
+        }
+
+        public Task<IEnumerable<Product>> FindByEanLikeAsync(string ean)
+        {
+            return FindByEanLikeAsync(ean, default);
+        }
+
+        public async Task<IEnumerable<Product>> FindByEanLikeAsync(
+            string ean,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var products = await connection.FindAsync<Product>(statement => statement
                 .Where($"({nameof(Product.Ean):C} LIKE @ean)")
                 .WithParameters(new { ean }));
 

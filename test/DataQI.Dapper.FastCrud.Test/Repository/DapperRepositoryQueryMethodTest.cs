@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 using ExpectedObjects;
 using Xunit;
@@ -33,6 +35,36 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             {
                 var productExpected = productsExpected.Current;
                 var products = productRepository.FindByEanLike($"{productExpected.Ean}%");
+
+                productExpected.ToExpectedObject().ShouldMatch(products.FirstOrDefault());
+            }
+        }
+
+        [Fact]
+        public async Task TestFindByEanLikeAsync()
+        {
+            var productsExpected = InsertTestProducts();
+
+            while (productsExpected.MoveNext())
+            {
+                var productExpected = productsExpected.Current;
+                var products = await productRepository.FindByEanLikeAsync($"{productExpected.Ean}%");
+
+                productExpected.ToExpectedObject().ShouldMatch(products.FirstOrDefault());
+            }
+        }
+
+        [Fact]
+        public async Task TestFindByEanLikeAsyncWithCancellationToken()
+        {
+            var productsExpected = InsertTestProducts();
+            using var cancellationTokenSource = new CancellationTokenSource();
+
+            while (productsExpected.MoveNext())
+            {
+                var productExpected = productsExpected.Current;
+                var products = await productRepository.FindByEanLikeAsync(
+                    $"{productExpected.Ean}%", cancellationTokenSource.Token);
 
                 productExpected.ToExpectedObject().ShouldMatch(products.FirstOrDefault());
             }
