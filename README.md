@@ -189,6 +189,21 @@ persons = personRepository.FindByEmailLikeOrPhoneNotNull(string email);
 persons = personRepository.FindFindByFirstNameAndLastNameOrBirthDateGreaterThan("A First Name", "A Last Name", new DateTime(2019, 1, 1));
 ```
 
+### Using Async Query Methods
+
+Query Methods can also be declared as asynchronous, returning `Task<IEnumerable<TEntity>>`. The method name may or may not carry the `Async` suffix — it's discarded while parsing the query, so `FindByLastName` and `FindByLastNameAsync` behave identically. An optional trailing `CancellationToken` parameter is forwarded to the underlying query.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    Task<IEnumerable<Person>> FindByLastNameAsync(string name);
+    Task<IEnumerable<Person>> FindByLastNameAsync(string name, CancellationToken cancellationToken);
+}
+
+var persons = await personRepository.FindByLastNameAsync("A Last Name");
+persons = await personRepository.FindByLastNameAsync("A Last Name", cancellationToken);
+```
+
 ### Using Statement Builder
 
 Customized Queries can be specified by using the `Dapper.FastCrud` statement builder API.

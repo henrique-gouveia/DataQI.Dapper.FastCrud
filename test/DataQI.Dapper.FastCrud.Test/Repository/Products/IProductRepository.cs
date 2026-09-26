@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
 using DataQI.Dapper.FastCrud.Repository;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository.Products
@@ -14,5 +17,9 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
         IEnumerable<Product> FindByDepartmentInAndNameLike(string[] departments, string name);
         
         IEnumerable<Product> FindByKeywordsLikeAndActive(string keywords, bool active = true);
+
+        Task<IEnumerable<Product>> FindByEanLikeAsync(string ean);
+
+        Task<IEnumerable<Product>> FindByEanLikeAsync(string ean, CancellationToken cancellationToken);
     }
 }
