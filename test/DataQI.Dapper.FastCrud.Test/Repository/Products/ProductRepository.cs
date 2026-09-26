@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
+using DataQI.Commons.Query.Support;
 using DataQI.Dapper.FastCrud.Repository.Support;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository.Products
@@ -22,6 +24,12 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
 
             return products;
         }
+
+        public Product FindByEan(string ean)
+            => Find(criteria => criteria.Add(Restrictions.Equal("Ean", ean))).SingleOrDefault();
+
+        public async Task<Product> FindByEanAsync(string ean)
+            => (await FindAsync(criteria => criteria.Add(Restrictions.Equal("Ean", ean)))).SingleOrDefault();
 
         public Task<IEnumerable<Product>> FindByEanLikeAsync(string ean)
         {
