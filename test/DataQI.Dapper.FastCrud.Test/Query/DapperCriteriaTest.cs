@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
 using Dapper.FastCrud;
+
 using DataQI.Commons.Query.Support;
 using DataQI.Dapper.FastCrud.Query;
 using DataQI.Dapper.FastCrud.Query.Support;
@@ -45,6 +48,20 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var command = criteria.BuildCommand();
 
             AssertCommand(expectedCommand, command);
+        }
+
+        [Fact]
+        public void TestBuildCommandIncludesOrderBy()
+        {
+            var expected = FormattableStringFactory.Create("FirstName ASC, LastName DESC");
+
+            criteria
+                .AddOrder(Order.Asc("FirstName"))
+                .AddOrder(Order.Desc("LastName"));
+
+            var command = criteria.BuildCommand();
+
+            AssertExpression(expected, command.OrderBy);
         }
     }
 }

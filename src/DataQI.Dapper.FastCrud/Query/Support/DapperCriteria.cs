@@ -13,6 +13,9 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             foreach (ICriterion criterion in criterions)
                 commandBuilder.AddExpression(criterion.GetExpressionBuilder());
 
+            foreach (IOrderCriterion order in orders)
+                commandBuilder.AddOrder(order);
+
             return commandBuilder.Build();
         }
     }
