@@ -82,9 +82,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var criteria = new DapperCriteria();
             criteriaBuilder(criteria);
             var dapperCommand = criteria.BuildCommand();
-            var entities = connection.Find<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .WithParameters(dapperCommand.Values));
+            var entities = connection.Find<TEntity>(statement =>
+            {
+                var result = statement
+                    .Where(dapperCommand.Command)
+                    .WithParameters(dapperCommand.Values);
+                if (dapperCommand.OrderBy != null)
+                    result.OrderBy(dapperCommand.OrderBy);
+            });
             return entities;
         }
 
@@ -95,9 +100,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var criteria = new DapperCriteria();
             criteriaBuilder(criteria);
             var dapperCommand = criteria.BuildCommand();
-            var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .WithParameters(dapperCommand.Values));
+            var entities = await connection.FindAsync<TEntity>(statement =>
+            {
+                var result = statement
+                    .Where(dapperCommand.Command)
+                    .WithParameters(dapperCommand.Values);
+                if (dapperCommand.OrderBy != null)
+                    result.OrderBy(dapperCommand.OrderBy);
+            });
             return entities;
         }
 
@@ -107,9 +117,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var criteria = new DapperCriteria();
             criteriaBuilder(criteria);
             var dapperCommand = criteria.BuildCommand();
-            var entities = connection.Find<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .WithParameters(dapperCommand.Values));
+            var entities = connection.Find<TEntity>(statement =>
+            {
+                var result = statement
+                    .Where(dapperCommand.Command)
+                    .WithParameters(dapperCommand.Values);
+                if (dapperCommand.OrderBy != null)
+                    result.OrderBy(dapperCommand.OrderBy);
+            });
             return entities.SingleOrDefault();
         }
 
@@ -120,9 +135,14 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             var criteria = new DapperCriteria();
             criteriaBuilder(criteria);
             var dapperCommand = criteria.BuildCommand();
-            var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .WithParameters(dapperCommand.Values));
+            var entities = await connection.FindAsync<TEntity>(statement =>
+            {
+                var result = statement
+                    .Where(dapperCommand.Command)
+                    .WithParameters(dapperCommand.Values);
+                if (dapperCommand.OrderBy != null)
+                    result.OrderBy(dapperCommand.OrderBy);
+            });
             return entities.SingleOrDefault();
         }
 

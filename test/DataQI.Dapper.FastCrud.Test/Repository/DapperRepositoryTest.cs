@@ -251,6 +251,34 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
+        public void TestFindByCriteriaAppliesOrderByCorrectly(bool useAsyncMethod)
+        {
+            var customersList = InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria
+                .Add(Restrictions.Not(Restrictions.Null(nameof(Customer.FullName))))
+                .AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            var customersExpected = customersList
+                .OrderByDescending(c => c.FullName)
+                .ToList();
+
+            IEnumerable<Customer> customers;
+
+            if (useAsyncMethod)
+                customers = customerRepository.FindAsync(criteriaBuilder).Result;
+            else
+                customers = customerRepository.Find(criteriaBuilder);
+
+            var customersActual = customers.ToList();
+            Assert.Equal(customersExpected.Count, customersActual.Count);
+            for (var i = 0; i < customersExpected.Count; i++)
+                customersExpected[i].ToExpectedObject().ShouldMatch(customersActual[i]);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
         public void TestFindAll(bool useAsyncMethod)
         {
             var customersExpected = InsertTestCustomersList();
