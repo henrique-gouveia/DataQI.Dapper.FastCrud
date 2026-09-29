@@ -125,7 +125,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
                 if (dapperCommand.OrderBy != null)
                     result.OrderBy(dapperCommand.OrderBy);
             });
-            return entities.SingleOrDefault();
+            return dapperCommand.OrderBy != null ? entities.FirstOrDefault() : entities.SingleOrDefault();
         }
 
         public async Task<TEntity> FindOneAsync(Func<ICriteria, ICriteria> criteriaBuilder,
@@ -143,7 +143,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
                 if (dapperCommand.OrderBy != null)
                     result.OrderBy(dapperCommand.OrderBy);
             });
-            return entities.SingleOrDefault();
+            return dapperCommand.OrderBy != null ? entities.FirstOrDefault() : entities.SingleOrDefault();
         }
 
         public IEnumerable<TEntity> FindAll()
