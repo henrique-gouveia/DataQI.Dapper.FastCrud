@@ -221,6 +221,34 @@ person = await personRepository.FindByEmailAsync("person@example.com");
 person = await personRepository.FindByEmailAsync("person@example.com", cancellationToken);
 ```
 
+### Ordering Query Results
+
+Add an `OrderBy` suffix to a query method to sort its results. Each non-final property needs an `Asc` or `Desc` suffix; the final property defaults to ascending when its direction is omitted.
+Ordering does not change single-entity behavior: a `FindOne` query still throws `InvalidOperationException` when multiple rows match.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    IEnumerable<Person> FindByLastNameOrderByFirstNameAscBirthDateDesc(string lastName);
+    Task<IEnumerable<Person>> FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
+        string lastName,
+        CancellationToken cancellationToken);
+}
+
+var people = await personRepository.FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
+    "Smith",
+    cancellationToken);
+```
+
+Criteria queries can also add ordered properties explicitly:
+
+```csharp
+var people = await personRepository.FindAsync(criteria => criteria
+    .Add(Restrictions.Equal("LastName", "Smith"))
+    .AddOrder(Order.Asc(nameof(Person.FirstName)))
+    .AddOrder(Order.Desc(nameof(Person.BirthDate))), cancellationToken);
+```
+
 ### Using Statement Builder
 
 Customized Queries can be specified by using the `Dapper.FastCrud` statement builder API.

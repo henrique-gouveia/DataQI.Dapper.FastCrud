@@ -9,8 +9,8 @@ namespace DataQI.Dapper.FastCrud.Test.Query
 {
     public abstract class DapperExpressionTestBase
     {
-        protected DapperCommand Command(FormattableString command, object values)
-            => new DapperCommand(command, values);
+        protected DapperCommand Command(FormattableString command, object values, FormattableString orderBy = null)
+            => new DapperCommand(command, values, orderBy);
 
         protected IDictionary<string, object> Parameters(params KeyValuePair<string, object>[] parametersKeyValue)
         {
@@ -36,7 +36,19 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         protected void AssertCommand(DapperCommand expected, DapperCommand actual)
         {
             AssertExpression(expected.Command, actual.Command);
+            AssertOrderBy(expected.OrderBy, actual.OrderBy);
             AssertObject(expected.Values, actual.Values);
+        }
+
+        protected void AssertOrderBy(FormattableString expected, FormattableString actual)
+        {
+            if (expected == null)
+            {
+                Assert.Null(actual);
+                return;
+            }
+
+            AssertExpression(expected, actual);
         }
 
         protected void AssertExpression(FormattableString expected, FormattableString actual)

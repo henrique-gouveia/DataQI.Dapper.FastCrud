@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Dapper.FastCrud;
 
@@ -171,6 +172,31 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 .AddExpression(junction2.GetExpressionBuilder());
 
             AssertCommand(expectedCommand, commandBuilder.Build());
+        }
+
+        [Fact]
+        public void TestBuildOrderByCorrectly()
+        {
+            var expected = FormattableStringFactory.Create("FirstName ASC, LastName DESC");
+
+            var command = commandBuilder
+                .AddOrder(Order.Asc("FirstName"))
+                .AddOrder(Order.Desc("LastName"))
+                .Build();
+
+            AssertExpression(expected, command.OrderBy);
+        }
+
+        [Fact]
+        public void TestBuildWithoutOrderByLeavesOrderByNull()
+        {
+            var firstNameCriterion = Restrictions.Equal("FirstName", "fake name");
+
+            var command = commandBuilder
+                .AddExpression(firstNameCriterion.GetExpressionBuilder())
+                .Build();
+
+            Assert.Null(command.OrderBy);
         }
     }
 }
