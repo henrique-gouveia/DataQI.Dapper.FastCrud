@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
@@ -279,26 +280,23 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         [Theory]
         [InlineData(false)]
         [InlineData(true)]
-        public void TestFindOneByCriteriaAppliesOrderByCorrectly(bool useAsyncMethod)
+        public async Task TestFindOneByCriteriaWithOrderingStillThrowsWhenMultipleMatches(bool useAsyncMethod)
         {
-            var customersList = InsertTestCustomersList();
+            InsertTestCustomersList();
 
             Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria
                 .Add(Restrictions.Not(Restrictions.Null(nameof(Customer.FullName))))
                 .AddOrder(Order.Desc(nameof(Customer.FullName)));
 
-            var customerExpected = customersList
-                .OrderByDescending(c => c.FullName)
-                .First();
-
-            Customer customer;
-
             if (useAsyncMethod)
-                customer = customerRepository.FindOneAsync(criteriaBuilder).Result;
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await customerRepository.FindOneAsync(criteriaBuilder));
             else
-                customer = customerRepository.FindOne(criteriaBuilder);
-
-            customerExpected.ToExpectedObject().ShouldMatch(customer);
+            {
+                var exception = Assert.Throws<TargetInvocationException>(() =>
+                    customerRepository.FindOne(criteriaBuilder));
+                Assert.IsType<InvalidOperationException>(exception.GetBaseException());
+            }
         }
 
         [Theory]
