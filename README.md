@@ -405,6 +405,13 @@ The DataQI FastCrud Provider library is not an ORM, or it attempts to solve all 
 
 ## Release notes
 
+**v3.0.0 - 2026/10**
+
+- New! Added support for async query methods
+- New! Added single-entity query methods and criteria-based `FindOne`/`FindOneAsync` methods
+- New! Added ordering through criteria and the `OrderBy` suffix in query method names
+- Change! Adopted the new `DataQI.Commons` APIs for async query methods, single-entity queries and ordering
+
 **v2.0.0 - 2024/12**
 
 - New! Added support to the `Dapper.FastCrud` statement builder
