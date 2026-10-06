@@ -10,11 +10,13 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 using Xunit;
 using ExpectedObjects;
+using Moq;
 
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Repository;
+using DataQI.Dapper.FastCrud.Repository.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Customers;
 
@@ -368,6 +370,100 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                 Assert.False(ExistsCustomer(customer, useAsyncMethod));
                 Assert.Null(FindOneCustomer(customer, useAsyncMethod));
             }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindWithEmptyCriteriaReturnsAllEntities(bool useAsyncMethod)
+        {
+            var customersExpected = InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria;
+
+            IEnumerable<Customer> customers;
+            if (useAsyncMethod)
+                customers = customerRepository.FindAsync(criteriaBuilder).Result;
+            else
+                customers = customerRepository.Find(criteriaBuilder);
+
+            customersExpected.ToExpectedObject().ShouldMatch(customers);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindWithOnlyOrderingAndNoCriteriaKeepsOrdering(bool useAsyncMethod)
+        {
+            var customersList = InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria =>
+                criteria.AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            var customersExpected = customersList
+                .OrderByDescending(c => c.FullName, StringComparer.Ordinal)
+                .ToList();
+
+            IEnumerable<Customer> customers;
+            if (useAsyncMethod)
+                customers = customerRepository.FindAsync(criteriaBuilder).Result;
+            else
+                customers = customerRepository.Find(criteriaBuilder);
+
+            customersExpected.ToExpectedObject().ShouldMatch(customers);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindWithUnknownOrderPropertyThrowsClearly(bool useAsyncMethod)
+        {
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria =>
+                criteria.AddOrder(Order.Asc("DoesNotExist"));
+
+            var exception = Assert.ThrowsAny<Exception>(() =>
+            {
+                if (useAsyncMethod)
+                    customerRepository.FindAsync(criteriaBuilder).Wait();
+                else
+                    customerRepository.Find(criteriaBuilder);
+            });
+
+            var baseException = exception.GetBaseException();
+            Assert.IsType<ArgumentException>(baseException);
+            Assert.Contains("DoesNotExist", baseException.Message);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestFindOneByCriteriaLimitsQueryToTwoRows(bool useAsyncMethod)
+        {
+            InsertTestCustomersList();
+
+            var commands = new List<IDbCommand>();
+            var observedConnection = new Mock<IDbConnection>(MockBehavior.Strict);
+            observedConnection.SetupGet(c => c.State).Returns(connection.State);
+            observedConnection.SetupGet(c => c.ConnectionString).Returns(connection.ConnectionString);
+            observedConnection.Setup(c => c.CreateCommand()).Returns(() =>
+            {
+                var command = connection.CreateCommand();
+                commands.Add(command);
+                return command;
+            });
+
+            var repository = new DapperRepository<Customer>(observedConnection.Object);
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria
+                .Add(Restrictions.Not(Restrictions.Null(nameof(Customer.FullName))))
+                .AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            if (useAsyncMethod)
+                await Assert.ThrowsAsync<InvalidOperationException>(() => repository.FindOneAsync(criteriaBuilder));
+            else
+                Assert.Throws<InvalidOperationException>(() => repository.FindOne(criteriaBuilder));
+
+            var executedCommand = Assert.Single(commands);
+            Assert.Matches(@"(?i)\bLIMIT\s+2\b", executedCommand.CommandText);
         }
 
         private bool ExistsCustomer(Customer customer, bool useAsyncMethod)
