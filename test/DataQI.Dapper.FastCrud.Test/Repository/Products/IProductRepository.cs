@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
 using DataQI.Dapper.FastCrud.Repository;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository.Products
@@ -7,6 +10,10 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
     {
         IEnumerable<Product> FindByEanLike(string ean);
 
+        Product FindByEan(string ean);
+
+        Task<Product> FindByEanAsync(string ean);
+
         IEnumerable<Product> FindByIdOrEanOrReference(int id, string ean, string reference);
 
         IEnumerable<Product> FindByNameLikeAndStockGreaterThan(string name, decimal stock = 0);
@@ -14,5 +21,9 @@ namespace DataQI.Dapper.FastCrud.Test.Repository.Products
         IEnumerable<Product> FindByDepartmentInAndNameLike(string[] departments, string name);
         
         IEnumerable<Product> FindByKeywordsLikeAndActive(string keywords, bool active = true);
+
+        Task<IEnumerable<Product>> FindByEanLikeAsync(string ean);
+
+        Task<IEnumerable<Product>> FindByEanLikeAsync(string ean, CancellationToken cancellationToken);
     }
 }

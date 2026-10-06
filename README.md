@@ -189,6 +189,66 @@ persons = personRepository.FindByEmailLikeOrPhoneNotNull(string email);
 persons = personRepository.FindFindByFirstNameAndLastNameOrBirthDateGreaterThan("A First Name", "A Last Name", new DateTime(2019, 1, 1));
 ```
 
+### Using Async Query Methods
+
+Query Methods can also be declared as asynchronous, returning `Task<IEnumerable<TEntity>>`. The method name may or may not carry the `Async` suffix — it's discarded while parsing the query, so `FindByLastName` and `FindByLastNameAsync` behave identically. An optional trailing `CancellationToken` parameter is forwarded to the underlying query.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    Task<IEnumerable<Person>> FindByLastNameAsync(string name);
+    Task<IEnumerable<Person>> FindByLastNameAsync(string name, CancellationToken cancellationToken);
+}
+
+var persons = await personRepository.FindByLastNameAsync("A Last Name");
+persons = await personRepository.FindByLastNameAsync("A Last Name", cancellationToken);
+```
+
+### Using Single-Entity Query Methods
+
+Query Methods can also be declared to return a single entity directly (`TEntity` or `Task<TEntity>`) instead of a collection. Zero matches returns `null`; more than one match throws `InvalidOperationException`.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    Person FindByEmail(string email);
+    Task<Person> FindByEmailAsync(string email);
+    Task<Person> FindByEmailAsync(string email, CancellationToken cancellationToken);
+}
+
+var person = personRepository.FindByEmail("person@example.com");
+person = await personRepository.FindByEmailAsync("person@example.com");
+person = await personRepository.FindByEmailAsync("person@example.com", cancellationToken);
+```
+
+### Ordering Query Results
+
+Add an `OrderBy` suffix to a query method to sort its results. Each non-final property needs an `Asc` or `Desc` suffix; the final property defaults to ascending when its direction is omitted.
+Ordering does not change single-entity behavior: a `FindOne` query still throws `InvalidOperationException` when multiple rows match.
+
+```csharp
+public interface IPersonRepository : IDapperRepository<Person>
+{
+    IEnumerable<Person> FindByLastNameOrderByFirstNameAscBirthDateDesc(string lastName);
+    Task<IEnumerable<Person>> FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
+        string lastName,
+        CancellationToken cancellationToken);
+}
+
+var people = await personRepository.FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
+    "Smith",
+    cancellationToken);
+```
+
+Criteria queries can also add ordered properties explicitly:
+
+```csharp
+var people = await personRepository.FindAsync(criteria => criteria
+    .Add(Restrictions.Equal("LastName", "Smith"))
+    .AddOrder(Order.Asc(nameof(Person.FirstName)))
+    .AddOrder(Order.Desc(nameof(Person.BirthDate))), cancellationToken);
+```
+
 ### Using Statement Builder
 
 Customized Queries can be specified by using the `Dapper.FastCrud` statement builder API.
@@ -344,6 +404,13 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
 The DataQI FastCrud Provider library is not an ORM, or it attempts to solve all data persistence problems. It provides a structure based on Repository Pattern that facilitates the rapid creation of repositories with methods that allow the creation, modification and deletion of data, as well as the preparation of simple queries by signing the methods declared in an interface, in order to avoid most of the effort involved in writing standard code in projects that use the [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) library.
 
 ## Release notes
+
+**v3.0.0 - 2026/10**
+
+- New! Added support for async query methods
+- New! Added single-entity query methods and criteria-based `FindOne`/`FindOneAsync` methods
+- New! Added ordering through criteria and the `OrderBy` suffix in query method names
+- Change! Adopted the new `DataQI.Commons` APIs for async query methods, single-entity queries and ordering
 
 **v2.0.0 - 2024/12**
 

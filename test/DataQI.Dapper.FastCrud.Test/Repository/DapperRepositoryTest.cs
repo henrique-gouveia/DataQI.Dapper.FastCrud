@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
@@ -245,6 +246,56 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                     customers = customerRepository.Find(criteriaBuilder);
 
                 customersExpected.ToExpectedObject().ShouldMatch(customers);
+            }
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindByCriteriaAppliesOrderByCorrectly(bool useAsyncMethod)
+        {
+            var customersList = InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria
+                .Add(Restrictions.Not(Restrictions.Null(nameof(Customer.FullName))))
+                .AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            var customersExpected = customersList
+                .OrderByDescending(c => c.FullName)
+                .ToList();
+
+            IEnumerable<Customer> customers;
+
+            if (useAsyncMethod)
+                customers = customerRepository.FindAsync(criteriaBuilder).Result;
+            else
+                customers = customerRepository.Find(criteriaBuilder);
+
+            var customersActual = customers.ToList();
+            Assert.Equal(customersExpected.Count, customersActual.Count);
+            for (var i = 0; i < customersExpected.Count; i++)
+                customersExpected[i].ToExpectedObject().ShouldMatch(customersActual[i]);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestFindOneByCriteriaWithOrderingStillThrowsWhenMultipleMatches(bool useAsyncMethod)
+        {
+            InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria
+                .Add(Restrictions.Not(Restrictions.Null(nameof(Customer.FullName))))
+                .AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            if (useAsyncMethod)
+                await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+                    await customerRepository.FindOneAsync(criteriaBuilder));
+            else
+            {
+                var exception = Assert.Throws<TargetInvocationException>(() =>
+                    customerRepository.FindOne(criteriaBuilder));
+                Assert.IsType<InvalidOperationException>(exception.GetBaseException());
             }
         }
 
