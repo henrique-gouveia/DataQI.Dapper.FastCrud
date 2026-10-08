@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.0</Version>
+    <Version>4.0.0</Version>
     <Authors>Henrique Gouveia</Authors>
     <Description>Data Query Interface it's Dapper.FastCrud provider that use infraestructure provided by DataQI.Commons and it turns your Data Repositories a live interface.</Description>
     <Copyright>(c) Henrique Gouveia</Copyright>
