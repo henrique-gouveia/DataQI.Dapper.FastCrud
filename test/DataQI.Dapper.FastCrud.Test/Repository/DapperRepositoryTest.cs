@@ -10,11 +10,14 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 using Xunit;
 using ExpectedObjects;
+using Moq;
 
 using DataQI.Commons.Query;
+using DataQI.Commons.Query.Ast;
 using DataQI.Commons.Query.Support;
 
 using DataQI.Dapper.FastCrud.Repository;
+using DataQI.Dapper.FastCrud.Repository.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Customers;
 
@@ -368,6 +371,156 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                 Assert.False(ExistsCustomer(customer, useAsyncMethod));
                 Assert.Null(FindOneCustomer(customer, useAsyncMethod));
             }
+        }
+
+        [Theory]
+        [InlineData(false, false)]
+        [InlineData(true, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true)]
+        public async Task TestFindByEqualNullMatchesCorrectly(bool useAsyncMethod, bool negated)
+        {
+            var nullEmailCustomer = CustomerBuilder.NewInstance().SetEmail(null).Build();
+            var nonNullEmailCustomer = CustomerBuilder.NewInstance().SetEmail("adams@example.com").Build();
+            customerRepository.Insert(nullEmailCustomer);
+            customerRepository.Insert(nonNullEmailCustomer);
+
+            var criterion = Restrictions.Equal(nameof(Customer.Email), null);
+            if (negated)
+                criterion = Restrictions.Not(criterion);
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria.Add(criterion);
+
+            var customers = useAsyncMethod
+                ? await customerRepository.FindAsync(criteriaBuilder)
+                : customerRepository.Find(criteriaBuilder);
+
+            var customer = Assert.Single(customers);
+            Assert.Equal(negated ? nonNullEmailCustomer.Id : nullEmailCustomer.Id, customer.Id);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindWithEmptyCriteriaReturnsAllEntities(bool useAsyncMethod)
+        {
+            var customersExpected = InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria;
+
+            IEnumerable<Customer> customers;
+            if (useAsyncMethod)
+                customers = customerRepository.FindAsync(criteriaBuilder).Result;
+            else
+                customers = customerRepository.Find(criteriaBuilder);
+
+            customersExpected.ToExpectedObject().ShouldMatch(customers);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindWithOnlyOrderingAndNoCriteriaKeepsOrdering(bool useAsyncMethod)
+        {
+            var customersList = InsertTestCustomersList();
+
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria =>
+                criteria.AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            var customersExpected = customersList
+                .OrderByDescending(c => c.FullName, StringComparer.Ordinal)
+                .ToList();
+
+            IEnumerable<Customer> customers;
+            if (useAsyncMethod)
+                customers = customerRepository.FindAsync(criteriaBuilder).Result;
+            else
+                customers = customerRepository.Find(criteriaBuilder);
+
+            customersExpected.ToExpectedObject().ShouldMatch(customers);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void TestFindWithUnknownOrderPropertyThrowsClearly(bool useAsyncMethod)
+        {
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria =>
+                criteria.AddOrder(Order.Asc("DoesNotExist"));
+
+            var exception = Assert.ThrowsAny<Exception>(() =>
+            {
+                if (useAsyncMethod)
+                    customerRepository.FindAsync(criteriaBuilder).Wait();
+                else
+                    customerRepository.Find(criteriaBuilder);
+            });
+
+            var baseException = exception.GetBaseException();
+            Assert.IsType<ArgumentException>(baseException);
+            Assert.Contains("DoesNotExist", baseException.Message);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestFindOneByCriteriaLimitsQueryToTwoRows(bool useAsyncMethod)
+        {
+            InsertTestCustomersList();
+
+            var commands = new List<IDbCommand>();
+            var observedConnection = new Mock<IDbConnection>(MockBehavior.Strict);
+            observedConnection.SetupGet(c => c.State).Returns(connection.State);
+            observedConnection.SetupGet(c => c.ConnectionString).Returns(connection.ConnectionString);
+            observedConnection.Setup(c => c.CreateCommand()).Returns(() =>
+            {
+                var command = connection.CreateCommand();
+                commands.Add(command);
+                return command;
+            });
+
+            var repository = new DapperRepository<Customer>(observedConnection.Object);
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria
+                .Add(Restrictions.Not(Restrictions.Null(nameof(Customer.FullName))))
+                .AddOrder(Order.Desc(nameof(Customer.FullName)));
+
+            if (useAsyncMethod)
+                await Assert.ThrowsAsync<InvalidOperationException>(() => repository.FindOneAsync(criteriaBuilder));
+            else
+                Assert.Throws<InvalidOperationException>(() => repository.FindOne(criteriaBuilder));
+
+            var executedCommand = Assert.Single(commands);
+            Assert.Matches(@"(?i)\bLIMIT\s+2\b", executedCommand.CommandText);
+        }
+
+        [Theory]
+        [InlineData(LogicalKind.And, false, false)]
+        [InlineData(LogicalKind.And, false, true)]
+        [InlineData(LogicalKind.And, true, false)]
+        [InlineData(LogicalKind.And, true, true)]
+        [InlineData(LogicalKind.Or, false, false)]
+        [InlineData(LogicalKind.Or, false, true)]
+        [InlineData(LogicalKind.Or, true, false)]
+        [InlineData(LogicalKind.Or, true, true)]
+        public async Task TestCriteriaQueriesRejectEmptyJunction(LogicalKind kind, bool findOne, bool useAsyncMethod)
+        {
+            Func<ICriteria, ICriteria> criteriaBuilder = criteria => criteria.Add(new Junction(kind));
+            Exception exception;
+
+            if (useAsyncMethod)
+            {
+                exception = findOne
+                    ? await Assert.ThrowsAnyAsync<Exception>(() => customerRepository.FindOneAsync(criteriaBuilder))
+                    : await Assert.ThrowsAnyAsync<Exception>(() => customerRepository.FindAsync(criteriaBuilder));
+            }
+            else
+            {
+                exception = findOne
+                    ? Assert.ThrowsAny<Exception>(() => customerRepository.FindOne(criteriaBuilder))
+                    : Assert.ThrowsAny<Exception>(() => customerRepository.Find(criteriaBuilder).ToArray());
+            }
+
+            var baseException = Assert.IsType<InvalidOperationException>(exception.GetBaseException());
+            Assert.Equal($"Junction '{kind}' must contain at least one criterion.", baseException.Message);
         }
 
         private bool ExistsCustomer(Customer customer, bool useAsyncMethod)

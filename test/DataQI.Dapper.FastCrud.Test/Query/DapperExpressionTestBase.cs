@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Dynamic;
-using DataQI.Dapper.FastCrud.Query;
 using ExpectedObjects;
 using Xunit;
 
@@ -9,9 +8,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
 {
     public abstract class DapperExpressionTestBase
     {
-        protected DapperCommand Command(FormattableString command, object values, FormattableString orderBy = null)
-            => new DapperCommand(command, values, orderBy);
-
         protected IDictionary<string, object> Parameters(params KeyValuePair<string, object>[] parametersKeyValue)
         {
             var parameters = new Dictionary<string, object>();
@@ -31,24 +27,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
                 parametersDictionary.Add(parameter.Key, parameter.Value);
 
             return parametersDynamic;
-        }
-
-        protected void AssertCommand(DapperCommand expected, DapperCommand actual)
-        {
-            AssertExpression(expected.Command, actual.Command);
-            AssertOrderBy(expected.OrderBy, actual.OrderBy);
-            AssertObject(expected.Values, actual.Values);
-        }
-
-        protected void AssertOrderBy(FormattableString expected, FormattableString actual)
-        {
-            if (expected == null)
-            {
-                Assert.Null(actual);
-                return;
-            }
-
-            AssertExpression(expected, actual);
         }
 
         protected void AssertExpression(FormattableString expected, FormattableString actual)

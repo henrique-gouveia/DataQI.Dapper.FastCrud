@@ -9,6 +9,7 @@ using Dapper.FastCrud;
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 using DataQI.Commons.Query;
+using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
 
 using DataQI.Dapper.FastCrud.Query.Support;
@@ -77,57 +78,43 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         }
 
         public IEnumerable<TEntity> Find(Func<ICriteria, ICriteria> criteriaBuilder)
-        {
-            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
-            var criteria = new DapperCriteria();
-            criteriaBuilder(criteria);
-            var dapperCommand = criteria.BuildCommand();
-            var entities = connection.Find<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .OrderBy(dapperCommand.OrderBy)
-                .WithParameters(dapperCommand.Values));
-            return entities;
-        }
+            => connection.Find<TEntity>(CriteriaStatement(criteriaBuilder));
 
         public async Task<IEnumerable<TEntity>> FindAsync(Func<ICriteria, ICriteria> criteriaBuilder,
             CancellationToken cancellationToken = default)
-        {
-            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
-            var criteria = new DapperCriteria();
-            criteriaBuilder(criteria);
-            var dapperCommand = criteria.BuildCommand();
-            var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .OrderBy(dapperCommand.OrderBy)
-                .WithParameters(dapperCommand.Values));
-            return entities;
-        }
+            => await connection.FindAsync<TEntity>(CriteriaStatement(criteriaBuilder));
 
         public TEntity FindOne(Func<ICriteria, ICriteria> criteriaBuilder)
-        {
-            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
-            var criteria = new DapperCriteria();
-            criteriaBuilder(criteria);
-            var dapperCommand = criteria.BuildCommand();
-            var entities = connection.Find<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .OrderBy(dapperCommand.OrderBy)
-                .WithParameters(dapperCommand.Values));
-            return entities.SingleOrDefault();
-        }
+            => connection.Find<TEntity>(CriteriaStatement(criteriaBuilder, 2)).SingleOrDefault();
 
         public async Task<TEntity> FindOneAsync(Func<ICriteria, ICriteria> criteriaBuilder,
             CancellationToken cancellationToken = default)
+            => (await connection.FindAsync<TEntity>(CriteriaStatement(criteriaBuilder, 2))).SingleOrDefault();
+
+
+        private static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> CriteriaStatement(
+            Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
         {
             Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
-            var criteria = new DapperCriteria();
-            criteriaBuilder(criteria);
-            var dapperCommand = criteria.BuildCommand();
-            var entities = await connection.FindAsync<TEntity>(statement => statement
-                .Where(dapperCommand.Command)
-                .OrderBy(dapperCommand.OrderBy)
-                .WithParameters(dapperCommand.Values));
-            return entities.SingleOrDefault();
+            var criteria = criteriaBuilder(new Criteria());
+
+            var predicate = DapperPredicateVisitor.BuildPredicate(criteria);
+            var orderBy = DapperOrderByBuilder.BuildOrderBy(criteria.Orders);
+            var hasCriterions = criteria.Criterions.Count > 0;
+
+            return statement =>
+            {
+                if (maxResults.HasValue)
+                    statement.Top(maxResults);
+
+                if (hasCriterions)
+                    statement
+                        .Where(predicate.Command)
+                        .OrderBy(orderBy)
+                        .WithParameters(predicate.Values);
+                else if (orderBy != null)
+                    statement.OrderBy(orderBy);
+            };
         }
 
         public IEnumerable<TEntity> FindAll()
