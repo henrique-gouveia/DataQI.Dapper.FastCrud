@@ -317,10 +317,6 @@ var personsByCriteriaAsync = await personRepository.FindAsync(criteria =>
     );
 ```
 
-## Criteria AST (4.0)
-
-Criteria are translated to SQL by an internal visitor (`DapperPredicateVisitor`) over the new Commons AST, and ordering by `DapperOrderByBuilder`. The public types of the old per-operator pipeline were removed: `DapperCriteria`, `DapperCommandBuilder`, `IDapperCommandBuilder`, `IDapperExpressionBuilder`, the `Dapper*Expression` classes and `DapperCriterionExtensions`. `DapperCommand` was also removed. `Restrictions` and `Func<ICriteria, ICriteria>` usage is unchanged. `Not` is now emitted as `Not (...)` around the negated expression instead of rewriting the operator; the rows returned are the same. Ordering by a property that does not exist now fails with an `ArgumentException` naming the property instead of a database error. See `DataQI.Commons`'s README for the breaking changes in the Commons API (`ICriterion`, `IOrderCriterion`, `Restrictions.StartingWith`).
-
 ### Using Customized Methods
 
 Customized Methods can be defined as normal class:
@@ -406,6 +402,10 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
 ## Limitations and caveats
 
 The DataQI FastCrud Provider library is not an ORM, or it attempts to solve all data persistence problems. It provides a structure based on Repository Pattern that facilitates the rapid creation of repositories with methods that allow the creation, modification and deletion of data, as well as the preparation of simple queries by signing the methods declared in an interface, in order to avoid most of the effort involved in writing standard code in projects that use the [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) library.
+
+## Criteria AST (4.0)
+
+Criteria are translated to SQL by an internal visitor (`DapperPredicateVisitor`) over the new Commons AST, and ordering by `DapperOrderByBuilder`. The public types of the old per-operator pipeline were removed: `DapperCriteria`, `DapperCommandBuilder`, `IDapperCommandBuilder`, `IDapperExpressionBuilder`, the `Dapper*Expression` classes and `DapperCriterionExtensions`. `DapperCommand` was also removed. `Restrictions` and `Func<ICriteria, ICriteria>` usage is unchanged. `Not` is now emitted as `Not (...)` around the negated expression instead of rewriting the operator; the rows returned are the same. Ordering by a property that does not exist now fails with an `ArgumentException` naming the property instead of a database error. See `DataQI.Commons`'s README for the breaking changes in the Commons API (`ICriterion`, `IOrderCriterion`, `Restrictions.StartingWith`).
 
 ## Release notes
 

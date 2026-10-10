@@ -19,6 +19,9 @@ namespace DataQI.Dapper.FastCrud.Query.Support
         public FormattableString Visit(Comparison comparison)
         {
             var column = Sql.Column(comparison.PropertyName);
+            if (comparison.Kind == ComparisonKind.Equal && comparison.Value == null)
+                return FormattableStringFactory.Create("{0} Is Null", column);
+
             var parameterName = Bind(comparison.Value);
             return FormattableStringFactory.Create(
                 $"{{0}} {Symbol(comparison.Kind)} @{{1}}", column, parameterName);
@@ -61,6 +64,9 @@ namespace DataQI.Dapper.FastCrud.Query.Support
 
         public FormattableString Visit(Junction junction)
         {
+            if (junction.Members.Count == 0)
+                throw new InvalidOperationException($"Junction '{junction.Kind}' must contain at least one criterion.");
+
             var members = new List<FormattableString>();
             foreach (var member in junction.Members)
                 members.Add(member.Accept(this));
@@ -94,14 +100,9 @@ namespace DataQI.Dapper.FastCrud.Query.Support
 
         private string Bind(object value)
         {
-            var lastKey = System.Linq.Enumerable.LastOrDefault(parameters.Keys);
-
-            int nextKey = 0;
-            if (int.TryParse(lastKey, out int parsedKey))
-                nextKey = parsedKey + 1;
-
-            parameters.Add($"{nextKey}", value);
-            return $"{nextKey}";
+            var parameterName = $"p{parameters.Count}";
+            parameters.Add(parameterName, value);
+            return parameterName;
         }
 
         public static DapperPredicate BuildPredicate(ICriteria criteria)
