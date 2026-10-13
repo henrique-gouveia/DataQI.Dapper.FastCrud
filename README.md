@@ -191,7 +191,7 @@ persons = personRepository.FindFindByFirstNameAndLastNameOrBirthDateGreaterThan(
 
 ### Using Async Query Methods
 
-Query Methods can also be declared as asynchronous, returning `Task<IEnumerable<TEntity>>`. The method name may or may not carry the `Async` suffix — it's discarded while parsing the query, so `FindByLastName` and `FindByLastNameAsync` behave identically. An optional trailing `CancellationToken` parameter is forwarded to the underlying query.
+Query Methods can also be declared as asynchronous, returning `Task<IEnumerable<TEntity>>`. The method name may or may not carry the `Async` suffix — it's discarded while parsing the query, so `FindByLastName` and `FindByLastNameAsync` behave identically. A trailing `CancellationToken` is accepted in the signature, but the current Dapper.FastCrud provider does not observe it.
 
 ```csharp
 public interface IPersonRepository : IDapperRepository<Person>
@@ -248,6 +248,60 @@ var people = await personRepository.FindAsync(criteria => criteria
     .AddOrder(Order.Asc(nameof(Person.FirstName)))
     .AddOrder(Order.Desc(nameof(Person.BirthDate))), cancellationToken);
 ```
+
+### Completing Query Methods with DataQI.Analyzers
+
+Add `DataQI.Analyzers` 0.1.0-preview.1 to a project using this provider and DataQI.Commons 4.0.0-preview.1:
+
+```xml
+<PackageReference Include="DataQI.Analyzers" Version="0.1.0-preview.1" PrivateAssets="all" />
+```
+
+In an interface extending `IDapperRepository<TEntity>`, type `F` after the return type to get `FindBy`. Completion then offers public scalar properties, compatible operators, `And`/`Or`, and `OrderBy` with `Asc`/`Desc`. Ctrl+Space after the return type also offers `FindBy`. Names the runtime would misread, such as `InStock` or a property ending in `Async`, are omitted from suggestions.
+
+```csharp
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
+using DataQI.Dapper.FastCrud.Repository;
+using DataQI.Dapper.FastCrud.Repository.Support;
+
+public class Product
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public decimal Price { get; set; }
+}
+
+public interface IProductRepository : IDapperRepository<Product>
+{
+    IEnumerable<Product> FindByNameStartingWithAndPriceGreaterThanOrderByPriceDesc(
+        string prefix, decimal minimumPrice);
+
+    Task<IEnumerable<Product>> FindByNameStartingWithAndPriceGreaterThanOrderByPriceDescAsync(
+        string prefix, decimal minimumPrice, CancellationToken cancellationToken = default);
+}
+
+public static class ProductQueries
+{
+    public static async Task RunAsync(IDbConnection connection, CancellationToken cancellationToken)
+    {
+        var repository = new DapperRepositoryFactory().GetRepository<IProductRepository>(connection);
+        var matches = repository.FindByNameStartingWithAndPriceGreaterThanOrderByPriceDesc("A", 10m);
+        var asyncMatches = await repository.FindByNameStartingWithAndPriceGreaterThanOrderByPriceDescAsync(
+            "A", 10m, cancellationToken);
+
+        foreach (var product in matches)
+            Console.WriteLine(product.Name);
+        foreach (var product in asyncMatches)
+            Console.WriteLine(product.Name);
+    }
+}
+```
+
+The caller supplies a configured connection. The async signature accepts a `CancellationToken` for compatibility; this provider currently does not cancel the underlying Dapper.FastCrud operation.
 
 ### Using Statement Builder
 
