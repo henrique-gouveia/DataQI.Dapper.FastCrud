@@ -7,6 +7,12 @@ Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm
 [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
 [![License](https://img.shields.io/github/license/henrique-gouveia/DataQI.Dapper.FastCrud.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/main/LICENSE.txt)
 
+## Framework and Dependency Compatibility
+
+The library targets only `netstandard2.0`.
+
+Tests, samples and benchmarks target only `net10.0`. Samples reference the current provider project. Development requires the .NET 10 SDK.
+
 ## Getting Started
 
 ### Installing
@@ -426,8 +432,10 @@ The following metrics show how long it takes to execute top CRUD statements on a
 The benchmarks can be found at [DataQI.Dapper.FastCrud.Benchmarks](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/tree/main/test/DataQI.Dapper.FastCrud.Benchmarks) (contributions welcome!) and can be run via:
 
 ```bash
-dotnet run --project .\test\DataQI.Dapper.FastCrud.Benchmarks\DataQI.Dapper.FastCrud.Benchmarks.csproj  -f net6.0 -c Release
+dotnet run --project .\test\DataQI.Dapper.FastCrud.Benchmarks\DataQI.Dapper.FastCrud.Benchmarks.csproj  -f net10.0 -c Release
 ```
+
+The measurements below are historical results from the earlier .NET 6 setup, not measurements of the current .NET 10 build.
 
 ```
 

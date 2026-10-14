@@ -13,7 +13,7 @@ WriteWarningLine("WARNING: You'll need to have a container engine like docker ru
 WriteLine("Press any key to continue...");
 ReadKey();
 
-var sqlContainer = new MsSqlBuilder().Build();
+var sqlContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
 await sqlContainer.StartAsync();
 Environment.SetEnvironmentVariable("ConnectionString", sqlContainer.GetConnectionString());
 DatabaseEnsurer.Execute();
