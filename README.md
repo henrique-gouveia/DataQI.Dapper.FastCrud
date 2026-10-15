@@ -1,25 +1,25 @@
 # DataQI Dapper.FastCrud
 
-Data Query Interface Provider for [Dapper.FastCrud](https://github.com/MoonStorm/Dapper.FastCRUD) written in C# and built around essential features of the .NET Standard that uses infrastructure provided by [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons) and it turns your Data Repositories a live interface. Its purpose is to facilitate the construction of data access layers, making possible the definition of repository interfaces, providing behaviors for standard operations as well as to define customized queries through method signatures.
+DataQI Dapper.FastCrud creates repository implementations from C# interfaces using [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) and [DataQI.Commons](https://github.com/henrique-gouveia/DataQI.Commons). It provides CRUD operations, synchronous and asynchronous queries, single-entity queries, ordering, and custom methods. Query method names describe the filters; their return types select collection or single-entity dispatch.
 
 [![Build](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/actions/workflows/dotnet.yml/badge.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/actions/workflows/dotnet.yml)
 [![codecov](https://codecov.io/gh/henrique-gouveia/DataQI.Dapper.FastCrud/branch/main/graph/badge.svg)](https://codecov.io/gh/henrique-gouveia/DataQI.Dapper.FastCrud)
 [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
-[![License](https://img.shields.io/github/license/henrique-gouveia/DataQI.Dapper.FastCrud.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/main/LICENSE.txt)
+[![License](https://img.shields.io/github/license/henrique-gouveia/DataQI.Dapper.FastCrud.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/main/LICENSE)
 
 ## Getting Started
 
 ### Installing
 
-This library can add in to the project by the way:
+Install the package in your application:
 
-    dotnet add package DataQI.Dapper.FastCrud
-
-See [Nuget](https://www.nuget.org/packages/DataQI.Dapper.FastCrud) for other options.
+```bash
+dotnet add package DataQI.Dapper.FastCrud
+```
 
 ### Defining a Repository
 
-A Repository Interface should extend the interface `IDapperRepository<TEntity>` localized in the namespace `DataQI.Dapper.FastCrud.Repository`, where the `TEntity` is a _Plain Old CSharp Object (POCO)_.
+Extend `IDapperRepository<TEntity>` from `DataQI.Dapper.FastCrud.Repository`. Entity mapping follows FastCrud conventions and attributes. The snippets focus on repository declarations and calls; use your own connection and application setup.
 
 ```csharp
 [Table("Person")]
@@ -39,7 +39,7 @@ public class Person
     public DateTime RegisterDate { get; set; }
     public string Email { get; set; }
     public string Phone { get; set; }
-    public boolean Active { get; set; }
+    public bool Active { get; set; }
 }
 
 public interface IPersonRepository : IDapperRepository<Person> { }
@@ -47,18 +47,20 @@ public interface IPersonRepository : IDapperRepository<Person> { }
 
 ### Instancing a Repository
 
-You must use an instance of the `DapperRepositoryFactory` class to instantiate a Repository, located in the `DataQI.Dapper.FastCrud.Repository.Support` namespace, which requires a `IDbConnection` to make its calls:
+You must use an instance of the `DapperRepositoryFactory` class to instantiate a repository, located in the `DataQI.Dapper.FastCrud.Repository.Support` namespace, which requires an `IDbConnection` to make its calls:
 
 ```csharp
 IDbConnection connection = CreateConnection();
 var repositoryFactory = new DapperRepositoryFactory();
 
-personRepository = repositoryFactory.GetRepository<IPersonRepository>(connection);
+var personRepository = repositoryFactory.GetRepository<IPersonRepository>(connection);
 ```
+
+Configure FastCrud's dialect before querying; for example, use `OrmConfiguration.DefaultDialect = SqlDialect.SqLite` for SQLite. Operations execute immediately, and disposing a repository disposes its connection.
 
 ### Configuring by using Microsoft's Dependency Injection
 
-After you have installed this lib, if you're using some type of .NET Web Application, you can do the following:
+After you have installed this library, if you're using a .NET web application, you can do the following:
 
 ```csharp
 var builder = WebApplication.CreateBuilder(args);
@@ -68,8 +70,10 @@ Don't forget to configure your database connection:
 
 ```csharp
 // Configure the Database Connection like you prefer...
-builder.Services.AddSingleton<IDbConnection>(...);
+builder.Services.AddTransient<IDbConnection>(_ => CreateConnection());
 ```
+
+A repository disposes the connection it receives, so register a connection per scope or per resolution instead of a shared singleton.
 
 If you don't need a specific repository interface, you can just register a service by doing the following:
 
@@ -92,288 +96,251 @@ Now, if you need to add custom support using a repository implementation, you ca
 builder.Services.AddDapperRepository<IPersonRepository, SomeCustomRepository, IDbConnection>();
 ```
 
-Take a look at the [Samples](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/tree/main/samples) to see how this works.
+Repositories and their factory are registered as scoped services, so resolve them within a service scope. Take a look at the [Samples](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/tree/main/samples) to see how this works.
 
 ### Using Default Methods
 
-A Repository Interface that extends `IDapperRepository<TEntity>` inherit its standard operations:
+`IDapperRepository<TEntity>` extends `ICrudRepository<TEntity, TEntity>`: its identifier is an entity instance with the key properties populated. In particular, `Delete`, `Exists`, and key-based `FindOne` take an entity, such as `new Person { Id = 1 }`.
 
-| **Operation**            | **Methods**                            |
-|--------------------------|----------------------------------------|
-| **Delete**               | Delete, DeleteAsync                    |
-| **Exists**               | Exists, ExistsAsync                    |
-| **Find Single**          | FindOne, FindOneAsync                  |
-| **Find Many**            | Find, FindAsync, FindAll, FindAllAsync |
-| **Insert**               | Insert, InsertAsync                    |
-| **Insert** or **Update** | Save, SaveAsync                        |
-
-#### Sample
+| Operation | Methods |
+| --- | --- |
+| Delete | `Delete`, `DeleteAsync` |
+| Exists | `Exists`, `ExistsAsync` |
+| Find single | `FindOne`, `FindOneAsync` (key or criteria) |
+| Find many | `Find`, `FindAsync` (criteria or FastCrud statement), `FindAll`, `FindAllAsync` |
+| Insert | `Insert`, `InsertAsync` |
+| Insert or update | `Save`, `SaveAsync` |
 
 ```csharp
 personRepository.Insert(person);
-await personRepository.InsertAsync(person);
+await personRepository.SaveAsync(person, cancellationToken);
 
-personRepository.Save(person);
-await personRepository.SaveAsync(person);
-
-personRepository.Delete(person);
-await personRepository.DeleteAsync(person);
-
-var exists = personRepository.Exists(person);
-exists = await personRepository.ExistsAsync(person);
-
-var allPersons = personRepository.FindAll();
-allPersons = await personRepository.FindAllAsync();
-
-var onePerson = personRepository.FindOne(new Person{ Id = 1 });
-onePerson = await personRepository.FindOneAsync(new Person{ Id = 1 });
+var key = new Person { Id = person.Id };
+var exists = personRepository.Exists(key);
+exists = await personRepository.ExistsAsync(key, cancellationToken);
+var onePerson = personRepository.FindOne(key);
+onePerson = await personRepository.FindOneAsync(key, cancellationToken);
+var allPersons = await personRepository.FindAllAsync(cancellationToken);
+await personRepository.DeleteAsync(key, cancellationToken);
 ```
+
+**Cancellation:** all async APIs accept a `CancellationToken`, including a final token in query method signatures. This provider currently ignores it and does not cancel the underlying FastCrud operation, even if the token is already canceled.
 
 ### Using Query Methods
 
-Customized Queries can be defined through method signatures with the following conventions:
-
-- The method name can be initiated with the prefix `FindBy`.
-- The next step should be indicated the field that will be want to apply an operator.
-- After the field name, should be indicated the operator (column `Operador` from the table below). The `Equal` is assumed how default operator if nothing it's indicate.
-- Finally, each sentence composition can be combined with another through of the `Conjunctions` _AND_ and `Disjunction` _OR_.
+The [Commons query method reference](https://github.com/henrique-gouveia/DataQI.Commons/blob/main/README.md#query-methods) defines the shared grammar: keywords and aliases, argument counts and types, `And`/`Or` precedence, reserved names, prefixes, ordering, return types, and trailing cancellation tokens. `FindBy` is the recommended prefix.
 
 #### Supported keywords inside method names
 
-| **Keyword**          | **Sample**                                | **Fragment**                            |
-|----------------------|-------------------------------------------|-----------------------------------------|
-| **Equal**            | FindByName, FindByName**Equal**           | where Name **=** @0                     |
-| **NotEqual**         | FindByName**Not**, FindByName**NotEqual** | where Name **<>** @0                    |
-| **Between**          | FindByAge**Between**                      | where Age **between** @0 **and** @1     |
-| **NotBetween**       | FindByAge**NotBetween**                   | where Age **not between** @0 **and** @1 |
-| **GreaterThan**      | FindByBirthDate**GreaterThan**            | where BirthDate **>** @0                |
-| **GreaterThanEqual** | FindByBirthDate**GreaterThanEqual**       | where BirthDate **>=** @0               |
-| **LessThan**         | FindByBirthDate**LessThan**               | where BirthDate **<** @0                |
-| **LessThanEqual**    | FindByBirthDate**LessThanEqual**          | where BirthDate **<=** @0               |
-| **In**               | FindByAddressType**In**                   | where AddressType **in** (@0)           |
-| **NotIn**            | FindByAddressType**NotIn**                | where AddressType **not in** (@0)       |
-| **Null**             | FindByEmail**Null**                       | where Email **is null**                 |
-| **NotNull**          | FindByEmail**NotNull**                    | where Email **is not null**             |
-| **StartingWith**     | FindByName**StartingWith**                | where Name **like** @0                  |
-| **NotStartingWith**  | FindByName**NotStartingWith**             | where Name **not like** @0              |
-| **EndingWith**       | FindByName**EndingWith**                  | where Name **like** @0                  |
-| **NotEndingWith**    | FindByName**NotEndingWith**               | where Name **not like** @0              |
-| **Containing**       | FindByName**Containing**                  | where Name **like** @0                  |
-| **NotContaining**    | FindByName**NotContaining**               | where Name **not like** @0              |
-| **Like**             | FindByName**Like**                        | where Name **like** @0                  |
-| **NotLike**          | FindByName**NotLike**                     | where Name **not like** @0              |
-| **And**              | FindByName**And**Email                    | where (Name = @0 **and** Email = @1)    |
-| **Or**               | FindByName**Or**Email                     | where (Name = @0 **or** Email = @1)     |
+Equality is the default operator, matching is case-sensitive, and values are consumed left to right; `And` binds more tightly than `Or`. The SQL shapes below show the statement before database-specific column quoting and Dapper's list expansion; parameters are generated as `@p0`, `@p1`, and so on, and values are bound separately. Columns resolve through FastCrud's entity mapping.
+
+| Keyword | Other forms | Args | SQL shape |
+| --- | --- | ---: | --- |
+| *(none)* / `Equal` | `Equals`, `IsEqual`, `IsEquals` | 1 | `FirstName = @p0` |
+| `Not` + keyword | negation marker (`NotEqual`, `NotBetween`, `NotIn`, `NotNull`, `NotLike`...) | same | `Not (FirstName = @p0)` |
+| `Between` | `IsBetween` | 2 | `BirthDate Between @p0 And @p1` (inclusive) |
+| `GreaterThan` / `GreaterThanEqual` | `IsGreaterThan` / `IsGreaterThanEqual` | 1 | `BirthDate > @p0` / `>=` |
+| `LessThan` / `LessThanEqual` | `IsLessThan` / `IsLessThanEqual` | 1 | `BirthDate < @p0` / `<=` |
+| `In` | `IsIn` | 1 | `Id In @p0` (Dapper expands the bound list) |
+| `Null` | `IsNull` | 0 | `Email Is Null` |
+| `StartingWith` | `StartsWith`, `IsStartingWith` | 1 | `FirstName Like @p0` |
+| `EndingWith` | `EndsWith`, `IsEndingWith` | 1 | `FirstName Like @p0` |
+| `Containing` | `Contains`, `IsContaining` | 1 | `FirstName Like @p0` |
+| `Like` | `IsLike` | 1 | `FirstName Like @p0` |
+| `And`, `Or` | | 0 | `(FirstName = @p0 AND LastName = @p1)`, `(Email = @p0 OR Phone Is Null)` |
+| `OrderBy`, `Asc`, `Desc` | | 0 | ordering clause (see [Ordering Query Results](#ordering-query-results)) |
+
+Every `Not` wraps its inner expression, including comparisons and junctions. SQL null semantics apply: negating a comparison with a non-null value does not include rows whose column is null. Add an explicit `Null` alternative if those rows should match.
+
+**Text patterns:** the provider binds the string unchanged for all four text operators. Supply SQL wildcards yourself: `"Ada%"` for a prefix, `"%Ada"` for a suffix, and `"%Ada%"` for containment. `"Ada"` adds no wildcard, even with `StartingWith`. SQL dialect and collation control matching and escaping. This differs from the EF Core provider, where `Like` and `Containing` use literal `string.Contains` semantics and `%` is ordinary text.
+
+**Enum values:** the visitor binds supplied values without converting them to the property's type. Prefer the actual enum value, for example `Restrictions.Equal("Status", Status.Active)`, with your database's mapping. This provider does not perform the EF Core provider's conversion of numeric values or numeric strings into enum constants; database/driver behavior decides whether other representations work. Use `object[]` for `In` criteria (for example, `new object[] { 1, 2 }`); the shared grammar documents query method array restrictions.
 
 #### Sample
 
 ```csharp
 public interface IPersonRepository : IDapperRepository<Person>
 {
-    IEnumerable<Person> FindByLastName(string name);
+    IEnumerable<Person> FindByLastName(string lastName);
     IEnumerable<Person> FindByBirthDateBetween(DateTime startDate, DateTime endDate);
-    IEnumerable<Person> FindByFirstNameLikeAndActive(string name, bool active = true);
-    IEnumerable<Person> FindByEmailLikeOrPhoneNotNull(string email);
-    IEnumerable<Person> FindByFirstNameAndLastNameOrBirthDateGreaterThan(string firstName, string lastName, DateTime registerDate);
+    IEnumerable<Person> FindByFirstNameLikeAndActive(string pattern, bool active = true);
+    IEnumerable<Person> FindByEmailLikeOrPhoneNotNull(string pattern);
+    IEnumerable<Person> FindByFirstNameAndLastNameOrBirthDateGreaterThan(
+        string firstName, string lastName, DateTime birthDate);
+    IEnumerable<Person> FindByFirstNameStartingWith(string pattern);
 }
+```
 
-IDbConnection connection = CreateConnection();
-var factory = new DapperRepositoryFactory();
-
-var personRepository = factory.GetRepository<IPersonRepository>(connection);
-
-var persons = personRepository.FindByLastName("A Last Name");
-persons = personRepository.FindByBirthDateBetween(new DateTime(2015, 1, 1), new DateTime(2020, 1, 1));
-persons = personRepository.FindByFirstNameLikeAndActive(string name, bool active = true);
-persons = personRepository.FindByEmailLikeOrPhoneNotNull(string email);
-persons = personRepository.FindFindByFirstNameAndLastNameOrBirthDateGreaterThan("A First Name", "A Last Name", new DateTime(2019, 1, 1));
+```csharp
+var persons = personRepository.FindByLastName("Lovelace");
+persons = personRepository.FindByBirthDateBetween(
+    new DateTime(1800, 1, 1), new DateTime(1900, 1, 1));
+persons = personRepository.FindByFirstNameLikeAndActive("%Ada%", true);
+persons = personRepository.FindByEmailLikeOrPhoneNotNull("%@example.com");
+persons = personRepository.FindByFirstNameAndLastNameOrBirthDateGreaterThan(
+    "Ada", "Lovelace", new DateTime(1900, 1, 1));
+persons = personRepository.FindByFirstNameStartingWith("Ada%");
 ```
 
 ### Using Async Query Methods
 
-Query Methods can also be declared as asynchronous, returning `Task<IEnumerable<TEntity>>`. The method name may or may not carry the `Async` suffix — it's discarded while parsing the query, so `FindByLastName` and `FindByLastNameAsync` behave identically. An optional trailing `CancellationToken` parameter is forwarded to the underlying query.
+Return `Task<IEnumerable<Person>>` or `Task<Person>` to run a query asynchronously. The return type determines dispatch, and an optional `Async` suffix is removed before parsing. A final `CancellationToken` parameter is accepted; this provider currently ignores it.
 
 ```csharp
-public interface IPersonRepository : IDapperRepository<Person>
-{
-    Task<IEnumerable<Person>> FindByLastNameAsync(string name);
-    Task<IEnumerable<Person>> FindByLastNameAsync(string name, CancellationToken cancellationToken);
-}
+// Added to IPersonRepository
+Task<IEnumerable<Person>> FindByLastNameAsync(
+    string lastName, CancellationToken cancellationToken = default);
+```
 
-var persons = await personRepository.FindByLastNameAsync("A Last Name");
-persons = await personRepository.FindByLastNameAsync("A Last Name", cancellationToken);
+```csharp
+var persons = await personRepository.FindByLastNameAsync("Lovelace", cancellationToken);
 ```
 
 ### Using Single-Entity Query Methods
 
-Query Methods can also be declared to return a single entity directly (`TEntity` or `Task<TEntity>`) instead of a collection. Zero matches returns `null`; more than one match throws `InvalidOperationException`.
+A query method can return `Person` or `Task<Person>`. Zero matches returns `null`; multiple matches throw `InvalidOperationException`. Return `IEnumerable<Person>` for collections.
 
 ```csharp
-public interface IPersonRepository : IDapperRepository<Person>
-{
-    Person FindByEmail(string email);
-    Task<Person> FindByEmailAsync(string email);
-    Task<Person> FindByEmailAsync(string email, CancellationToken cancellationToken);
-}
+// Added to IPersonRepository
+Person FindByEmail(string email);
+Task<Person> FindByEmailAsync(string email, CancellationToken cancellationToken = default);
+```
 
-var person = personRepository.FindByEmail("person@example.com");
-person = await personRepository.FindByEmailAsync("person@example.com");
-person = await personRepository.FindByEmailAsync("person@example.com", cancellationToken);
+```csharp
+var person = personRepository.FindByEmail("ada@example.com");
+person = await personRepository.FindByEmailAsync("ada@example.com", cancellationToken);
 ```
 
 ### Ordering Query Results
 
-Add an `OrderBy` suffix to a query method to sort its results. Each non-final property needs an `Asc` or `Desc` suffix; the final property defaults to ascending when its direction is omitted.
-Ordering does not change single-entity behavior: a `FindOne` query still throws `InvalidOperationException` when multiple rows match.
+Add `OrderBy` after at least one filter. Each non-final ordering property needs `Asc` or `Desc`; the final property defaults to ascending. Ordering does not suppress the multiple-match error for single-entity queries.
 
 ```csharp
-public interface IPersonRepository : IDapperRepository<Person>
-{
-    IEnumerable<Person> FindByLastNameOrderByFirstNameAscBirthDateDesc(string lastName);
-    Task<IEnumerable<Person>> FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
-        string lastName,
-        CancellationToken cancellationToken);
-}
-
-var people = await personRepository.FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
-    "Smith",
-    cancellationToken);
+// Added to IPersonRepository
+IEnumerable<Person> FindByLastNameOrderByFirstNameAscBirthDateDesc(string lastName);
+Task<IEnumerable<Person>> FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
+    string lastName, CancellationToken cancellationToken = default);
 ```
 
-Criteria queries can also add ordered properties explicitly:
-
 ```csharp
-var people = await personRepository.FindAsync(criteria => criteria
-    .Add(Restrictions.Equal("LastName", "Smith"))
+var people = personRepository.FindByLastNameOrderByFirstNameAscBirthDateDesc("Lovelace");
+people = await personRepository.FindByLastNameOrderByFirstNameAscBirthDateDescAsync(
+    "Lovelace", cancellationToken);
+people = await personRepository.FindAsync(criteria => criteria
+    .Add(Restrictions.Equal(nameof(Person.LastName), "Lovelace"))
     .AddOrder(Order.Asc(nameof(Person.FirstName)))
     .AddOrder(Order.Desc(nameof(Person.BirthDate))), cancellationToken);
 ```
 
+### Query-method completion
+
+Completion is provided by [DataQI.Analyzers](https://github.com/henrique-gouveia/DataQI.Analyzers), which comes with the Commons 4.0 dependency (see the [Commons reference](https://github.com/henrique-gouveia/DataQI.Commons/blob/main/README.md#completing-query-methods-with-dataqianalyzers)). See the DataQI.Analyzers repository for compatible IDEs and editor configuration.
+
+Specific to this provider: text operators are suggested for `string` properties, but the SQL wildcards must still be part of the argument (see [Supported keywords inside method names](#supported-keywords-inside-method-names)). The [shared grammar](https://github.com/henrique-gouveia/DataQI.Commons/blob/main/README.md#query-methods) and the provider's translation rules determine which queries work.
+
 ### Using Statement Builder
 
-Customized Queries can be specified by using the `Dapper.FastCrud` statement builder API.
+`Find` and `FindAsync` also accept FastCrud's statement builder. Use `:C` in interpolated `FormattableString` arguments to resolve mapped column names. Use named SQL parameters such as `@FirstName` with FastCrud 2.6.7. Keep values in `WithParameters`; inserting values directly into SQL text bypasses parameter binding. If you save a SQL fragment in a variable, declare it as `FormattableString` to preserve the format specifiers.
 
 ```csharp
-var persons = personRepository.Find(statement => statement 
-        .Where($@"
-            {nameof(Person.FirstName)} like @FirstName}
-            AND (
-                {nameof(Person.BirthDate)} BETWEEN @StartDate AND @EndDate) 
-                OR {nameof(Person.RegisterDate)} > @RegisterDate
-            )")
-        .OrderBy($"{nameof(Person.FirstName)}")
-        .Skip(0)
-        .Top(20)
-        .WithParameters(new 
-        {
-            FirstName = "%Name%",
-            StartDate = new DateTime(2015, 1, 1),
-            EndDate = new DateTime(2020, 1, 1),
-            RegisterDate = new DateTime(2019, 1, 1)
-        })
-    );
+var parameters = new
+{
+    FirstName = "%Ada%",
+    StartDate = new DateTime(1800, 1, 1),
+    EndDate = new DateTime(1900, 1, 1),
+    RegisterDate = new DateTime(2020, 1, 1)
+};
+FormattableString predicate = $@"
+    {nameof(Person.FirstName):C} LIKE @FirstName
+    AND (
+        {nameof(Person.BirthDate):C} BETWEEN @StartDate AND @EndDate
+        OR {nameof(Person.RegisterDate):C} > @RegisterDate
+    )";
 
-var persons = await personRepository.FindAsync(statement => statement 
-        .Where($@"
-            {nameof(Person.FirstName)} like @FirstName}
-            AND (
-                {nameof(Person.BirthDate)} BETWEEN @StartDate AND @EndDate) 
-                OR {nameof(Person.RegisterDate)} > @RegisterDate
-            )")
-        .OrderBy($"{nameof(Person.FirstName)}")
-        .Skip(1)
-        .Top(20)
-        .WithParameters(new 
-        {
-            FirstName = "%Name%",
-            StartDate = new DateTime(2015, 1, 1),
-            EndDate = new DateTime(2020, 1, 1),
-            RegisterDate = new DateTime(2019, 1, 1)
-        })
-    );
+var persons = personRepository.Find(statement => statement
+    .Where(predicate)
+    .OrderBy($"{nameof(Person.FirstName):C}")
+    .Skip(0)
+    .Top(20)
+    .WithParameters(parameters));
+var personsAsync = await personRepository.FindAsync(statement => statement
+    .Where(predicate)
+    .OrderBy($"{nameof(Person.FirstName):C}")
+    .Skip(20)
+    .Top(20)
+    .WithParameters(parameters), cancellationToken);
 ```
 
 ### Using Criteria Definitions
 
-Customized Queries can be specified by a simple Criteria Query API where are the main artifacts is localized in the namespace `DataQI.Common.Query` and `DataQI.Common.Query.Support`.
+The shared criteria API is in `DataQI.Commons.Query` and `DataQI.Commons.Query.Support`. Each top-level criterion is combined with `AND`; use `Disjunction()` for an explicit `OR` group.
 
 ```csharp
-var personsByCriteria = personRepository.Find(criteria =>
-    criteria
-        .Add(Restrictions.Like("FirstName", "Name%"))
-        .Add(Restrictions
-            .Disjuction()
-            .Add(Restrictions.Between("BirthDate", new DateTime(2015, 1, 1), new DateTime(2020, 1, 1)))
-            .Add(Restrictions.Equal("Active", true)))
-    );
+var persons = personRepository.Find(criteria => criteria
+    .Add(Restrictions.Like(nameof(Person.FirstName), "Ada%"))
+    .Add(Restrictions.Disjunction()
+        .Add(Restrictions.Between(nameof(Person.BirthDate),
+            new DateTime(1800, 1, 1), new DateTime(1900, 1, 1)))
+        .Add(Restrictions.Equal(nameof(Person.Active), true))));
 
-var personsByCriteriaAsync = await personRepository.FindAsync(criteria =>
-    criteria
-        .Add(Restrictions.Like("LastName", "%Name%"))
-        .Add(Restrictions
-            .Disjuction()
-            .Add(Restrictions.Between("BirthDate", new DateTime(2015, 1, 1), new DateTime(2020, 1, 1)))
-            .Add(Restrictions.GreaterThan("RegisterDate", new DateTime(2019, 1, 1))))
-    );
+var personsAsync = await personRepository.FindAsync(criteria => criteria
+    .Add(Restrictions.Like(nameof(Person.LastName), "%Lovelace%"))
+    .Add(Restrictions.Disjunction()
+        .Add(Restrictions.Between(nameof(Person.BirthDate),
+            new DateTime(1800, 1, 1), new DateTime(1900, 1, 1)))
+        .Add(Restrictions.GreaterThan(nameof(Person.RegisterDate), new DateTime(2020, 1, 1)))),
+    cancellationToken);
 ```
 
 ### Using Customized Methods
 
-Customized Methods can be defined as normal class:
-
-- The method should be defined in the repository interface.
-- The class with implementation may or may not implement the interface.
-- This can be used for any kind of customization that you want.
+Declare custom methods on the repository interface and provide matching public methods in a concrete class. The proxy forwards exact method matches to that class and builds query methods from their names. The class does not need to implement the interface; inherit `DapperRepository<Person>` to reuse CRUD operations.
 
 ```csharp
-public interface IPersonRepository : IDapperRepository<Person>
+public interface ICustomPersonRepository : IPersonRepository
 {
-    // Query Methods
-    IEnumerable<Person> FindByEmailNotNull();
-    IEnumerable<Person> FindByFirstNameStartingWith(string firstName);
-
-    // Customized Methods
     void AddAll(IEnumerable<Person> persons);
 }
 
 public class PersonRepository : DapperRepository<Person>
 {
+    public PersonRepository(IDbConnection connection) : base(connection) { }
+
     public void AddAll(IEnumerable<Person> persons)
     {
         foreach (var person in persons)
         {
-            this.Insert(person)
+            Insert(person);
         }
     }
 }
+```
 
-// Getting Repository
-IDbConnection connection = CreateConnection();
-var factory = new DapperRepositoryFactory();
+Pass the custom implementation to the factory:
 
-var personRepository = factory.GetRepository<IPersonRepository>(() => new PersonRepository(connection));
-
-// Using Query Methods
+```csharp
+var repositoryFactory = new DapperRepositoryFactory();
+var personRepository = repositoryFactory.GetRepository<ICustomPersonRepository>(
+    () => new PersonRepository(connection));
+personRepository.AddAll(new[]
+{
+    new Person { FirstName = "Ada", LastName = "Lovelace" },
+    new Person { FirstName = "Grace", LastName = "Hopper" }
+});
 var persons = personRepository.FindByEmailNotNull();
-persons = personRepository.FindByFirstNameStartingWith("Name");
-
-// Using Customized Methods
-person1 = new Person() {...};
-person2 = new Person() {...};
-person3 = new Person() {...};
-
-personRepository.AddAll(new List<Person> { person1, person2, person3 });
 ```
 
 ## Performance
 
-The following metrics show how long it takes to execute top CRUD statements on a SQLServer database, comparing the provider to dry FastCrud.
+These historical SQL Server results compare CRUD operations through DataQI with direct FastCrud calls. They predate the 4.0 AST rewrite and do not measure the current implementation.
 
 The benchmarks can be found at [DataQI.Dapper.FastCrud.Benchmarks](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/tree/main/test/DataQI.Dapper.FastCrud.Benchmarks) (contributions welcome!) and can be run via:
 
 ```bash
-dotnet run --project .\test\DataQI.Dapper.FastCrud.Benchmarks\DataQI.Dapper.FastCrud.Benchmarks.csproj  -f net6.0 -c Release
+dotnet run --project .\test\DataQI.Dapper.FastCrud.Benchmarks\DataQI.Dapper.FastCrud.Benchmarks.csproj  -f net10.0 -c Release
 ```
+
+The measurements below are historical results from the earlier .NET 6 setup, not measurements of the current .NET 10 build.
 
 ```
 
@@ -401,13 +368,16 @@ Intel Core i7-8565U CPU 1.80GHz (Whiskey Lake), 1 CPU, 8 logical and 4 physical 
 
 ## Limitations and caveats
 
-The DataQI FastCrud Provider library is not an ORM, or it attempts to solve all data persistence problems. It provides a structure based on Repository Pattern that facilitates the rapid creation of repositories with methods that allow the creation, modification and deletion of data, as well as the preparation of simple queries by signing the methods declared in an interface, in order to avoid most of the effort involved in writing standard code in projects that use the [Dapper.FastCrud](https://github.com/MoonStorm/FastCrud) library.
+This provider reduces repository boilerplate for applications already using FastCrud. Database schema, connections, transactions, dialect configuration, and SQL pattern semantics remain application concerns. Query methods support the shared Commons grammar and return shapes; use criteria, the statement builder, or a custom method for queries outside it. Cancellation tokens are currently accepted but ignored.
 
-## Criteria AST (4.0)
+## Release Notes
 
-Criteria are translated to SQL by an internal visitor (`DapperPredicateVisitor`) over the new Commons AST, and ordering by `DapperOrderByBuilder`. The public types of the old per-operator pipeline were removed: `DapperCriteria`, `DapperCommandBuilder`, `IDapperCommandBuilder`, `IDapperExpressionBuilder`, the `Dapper*Expression` classes and `DapperCriterionExtensions`. `DapperCommand` was also removed. `Restrictions` and `Func<ICriteria, ICriteria>` usage is unchanged. `Not` is now emitted as `Not (...)` around the negated expression instead of rewriting the operator; the rows returned are the same. Ordering by a property that does not exist now fails with an `ArgumentException` naming the property instead of a database error. See `DataQI.Commons`'s README for the breaking changes in the Commons API (`ICriterion`, `IOrderCriterion`, `Restrictions.StartingWith`).
+**v4.0.0 - current source**
 
-## Release notes
+- **Breaking Change!** Replaced the public per-operator translation pipeline with internal visitors over the Commons 4.x criteria AST; removed the translation types listed in the migration guide.
+- Change! Negation emits `Not (...)`, and invalid ordering properties fail with an `ArgumentException`.
+- Change! Added XML documentation for public APIs.
+- Change! tests, samples, and benchmarks target .NET 10; the library remains `netstandard2.0`.
 
 **v3.0.0 - 2026/10**
 
@@ -418,13 +388,13 @@ Criteria are translated to SQL by an internal visitor (`DapperPredicateVisitor`)
 
 **v2.0.0 - 2024/12**
 
-- New! Added support to the `Dapper.FastCrud` statement builder
-- Change! Upgraded version of `DataQI.Commons` to the `2.0.0` to support new features
+- New! Added support for the `Dapper.FastCrud` statement builder
+- Change! Upgraded `DataQI.Commons` to `2.0.0` to support new features
 
 **v1.5.0 - 2023/01**
 
 - New! Added project to perform benchmarks
-- New! Added support to register repositories for Microsoft's Dependency Injection
+- New! Added support for registering repositories with Microsoft's dependency injection container
 - New! Added sample project
 
 **v1.4.0 - 2022/06**
@@ -433,18 +403,18 @@ Criteria are translated to SQL by an internal visitor (`DapperPredicateVisitor`)
 
 **v1.3.0 - 2022/01**
 
-- Change! Added support to the new `DataQI.Commons` features
+- Change! Added support for the new `DataQI.Commons` features
 
 **v1.2.0 - 2022/01**
 
-- New! Added support to the new `RepositoryFactory` features
+- New! Added support for the new `RepositoryFactory` features
 - New! Added the ability to invoke non-standard methods defined on a client
 - Change! `TEntity` requirements on generic interface `IDapperRepository`
 - **Breaking Change!** Removed `DbConnection` as argument on `DapperRepositoryFactory` constructor
 
 **v1.1.0 - 2020/09**
 
-- New! Added support to the new Criteria Query API
+- New! Added support for the new Criteria Query API
 - New! Added Criteria Parser
 
 **v1.0.0 - 2020/03**
@@ -453,4 +423,4 @@ Criteria are translated to SQL by an internal visitor (`DapperPredicateVisitor`)
 
 ## License
 
-DataQI Dapper.FastCrud is released under the [MIT License](https://opensource.org/licenses/MIT).
+DataQI Dapper.FastCrud is released under the [MIT License](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/main/LICENSE).
