@@ -228,14 +228,14 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
 
         private IList<Product> InsertTestProductsList()
         {
-            List<Product> Products =
-            [
+            var Products = new List<Product>()
+            {
                 ProductBuilder.NewInstance().Build(),
                 ProductBuilder.NewInstance().Build(),
                 ProductBuilder.NewInstance().Build(),
                 ProductBuilder.NewInstance().Build(),
                 ProductBuilder.NewInstance().Build(),
-            ];
+            };
 
             Products.ForEach(p =>
             {

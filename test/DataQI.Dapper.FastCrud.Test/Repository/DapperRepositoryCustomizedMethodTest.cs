@@ -63,14 +63,14 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             employeeRepository.InsertDepartment(productionDepartment);
             employeeRepository.InsertDepartment(salesDepartment);
 
-            List<Employee> employees =
-            [
+            var employees = new List<Employee>()
+            {
                 EmployeeBuilder.NewInstance().SetDepartment(productionDepartment).Build(),
                 EmployeeBuilder.NewInstance().SetDepartment(productionDepartment).Build(),
                 EmployeeBuilder.NewInstance().SetDepartment(productionDepartment).Build(),
                 EmployeeBuilder.NewInstance().SetDepartment(salesDepartment).Build(),
                 EmployeeBuilder.NewInstance().SetDepartment(salesDepartment).Build(),
-            ];
+            };
 
             employees.ForEach(o => InsertTestEmployee(o));
 

@@ -132,7 +132,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         [Fact]
         public void TestBuildInCorrectly()
         {
-            object[] cities = ["Fortaleza", "Barcelona"];
+            var cities = new object[] { "Fortaleza", "Barcelona" };
             var criteria = new Criteria().Add(Restrictions.In("City", cities));
 
             var predicate = DapperPredicateVisitor.BuildPredicate(criteria);
@@ -263,7 +263,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             AssertNot(Restrictions.Containing("Name", "da"), $"{Sql.Column("Name")} Like @{"p0"}");
             AssertNot(Restrictions.Like("Name", "Ad%"), $"{Sql.Column("Name")} Like @{"p0"}");
             AssertNot(Restrictions.Equal("Name", "Adams"), $"{Sql.Column("Name")} = @{"p0"}");
-            AssertNot(Restrictions.In("City", ["A", "B"]), $"{Sql.Column("City")} In @{"p0"}");
+            AssertNot(Restrictions.In("City", new object[] { "A", "B" }), $"{Sql.Column("City")} In @{"p0"}");
             AssertNot(Restrictions.Null("Email"), $"{Sql.Column("Email")} Is Null");
         }
 
