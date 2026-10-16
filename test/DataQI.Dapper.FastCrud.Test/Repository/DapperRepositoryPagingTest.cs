@@ -56,7 +56,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         }
 
         [Fact]
-        public void TestLastPartialPage()
+        public async Task TestLastPartialPage()
         {
             var slice = repository.FindSlice(c => c, PageRequest.Of(2, 10));
             Assert.Equal(5, slice.Items.Count);
@@ -65,6 +65,10 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             Assert.Equal(5, page.Items.Count);
             Assert.False(page.HasNext);
             Assert.Equal(25, page.TotalCount);
+            var asyncPage = await repository.FindPageAsync(c => c, PageRequest.Of(2, 10));
+            Assert.Equal(5, asyncPage.Items.Count);
+            Assert.False(asyncPage.HasNext);
+            Assert.Equal(25, asyncPage.TotalCount);
         }
 
         [Fact]
