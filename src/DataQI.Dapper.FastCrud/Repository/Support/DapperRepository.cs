@@ -129,7 +129,27 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             CancellationToken cancellationToken = default)
             => (await connection.FindAsync<TEntity>(CriteriaStatement(criteriaBuilder, 2))).SingleOrDefault();
 
+        private static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> CriteriaStatement(
+            Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
+        {
+            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
+            var orderBy = DapperOrderByBuilder.BuildOrderBy(criteria.Orders);
 
+            return statement =>
+            {
+                if (maxResults.HasValue)
+                    statement.Top(maxResults);
+
+                if (hasCriterions)
+                    statement
+                        .Where(predicate.Command)
+                        .OrderBy(orderBy)
+                        .WithParameters(predicate.Values);
+                else if (orderBy != null)
+                    statement.OrderBy(orderBy);
+            };
+        }
+        
         /// <inheritdoc />
         public ISlice<TEntity> FindSlice(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
@@ -187,27 +207,6 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
             var criteria = criteriaBuilder(new Criteria());
             return (criteria, DapperPredicateVisitor.BuildPredicate(criteria), criteria.Criterions.Count > 0);
-        }
-
-        private static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> CriteriaStatement(
-            Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
-        {
-            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var orderBy = DapperOrderByBuilder.BuildOrderBy(criteria.Orders);
-
-            return statement =>
-            {
-                if (maxResults.HasValue)
-                    statement.Top(maxResults);
-
-                if (hasCriterions)
-                    statement
-                        .Where(predicate.Command)
-                        .OrderBy(orderBy)
-                        .WithParameters(predicate.Values);
-                else if (orderBy != null)
-                    statement.OrderBy(orderBy);
-            };
         }
 
         /// <inheritdoc />
