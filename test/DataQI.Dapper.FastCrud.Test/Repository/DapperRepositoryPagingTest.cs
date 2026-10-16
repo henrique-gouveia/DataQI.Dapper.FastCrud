@@ -218,10 +218,19 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
                 new CustomPageRequest(2, 10, 5, [])));
         }
 
-        [Fact]
-        public void TestUnknownOrderPropertyFails()
+        [Theory]
+        [InlineData("Nope")]
+        [InlineData("Name; DROP TABLE Products")]
+        [InlineData("Name DESC, (SELECT 1)")]
+        public async Task TestUnknownOrderPropertyFails(string propertyName)
         {
-            Assert.ThrowsAny<Exception>(() => direct.FindSlice(c => c, PageRequest.Of(0, 10, Order.Asc("Nope"))));
+            var page = PageRequest.Of(0, 10, Order.Asc(propertyName));
+            var message = $"Cannot order Product by unknown property '{propertyName}'.";
+            Assert.Equal(message, Assert.Throws<InvalidOperationException>(() => direct.FindSlice(c => c, page)).Message);
+            Assert.Equal(message, Assert.Throws<InvalidOperationException>(() => direct.FindPage(c => c, page)).Message);
+            Assert.Equal(message, (await Assert.ThrowsAsync<InvalidOperationException>(() => direct.FindSliceAsync(c => c, page))).Message);
+            Assert.Equal(message, (await Assert.ThrowsAsync<InvalidOperationException>(() => direct.FindPageAsync(c => c, page))).Message);
+            Assert.Equal(25, direct.FindPage(c => c, PageRequest.Of(0, 10)).TotalCount);
         }
 
         [Fact]

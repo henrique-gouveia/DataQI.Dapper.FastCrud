@@ -18,6 +18,12 @@ namespace DataQI.Dapper.FastCrud.Query.Support
         public static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> PageStatement(
             DapperPredicate predicate, bool hasCriterions, IReadOnlyList<IOrderCriterion> orders, long skip, long top)
         {
+            var mappedProperties = new HashSet<string>(OrmConfiguration.GetDefaultEntityMapping<TEntity>()
+                .GetProperties().Select(p => p.PropertyName), StringComparer.Ordinal);
+            foreach (var order in orders)
+                if (!mappedProperties.Contains(order.PropertyName))
+                    throw new InvalidOperationException(
+                        $"Cannot order {typeof(TEntity).Name} by unknown property '{order.PropertyName}'.");
             var orderBy = DapperOrderByBuilder.BuildOrderBy(orders.ToArray());
             return statement =>
             {

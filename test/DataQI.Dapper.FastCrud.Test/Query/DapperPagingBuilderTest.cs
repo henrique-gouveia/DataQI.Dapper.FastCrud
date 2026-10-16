@@ -38,6 +38,19 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             Assert.Equal(10, connection.Find<Product>(statement).Count());
         }
 
+        [Theory]
+        [InlineData("Nope")]
+        [InlineData("Name; DROP TABLE Products")]
+        [InlineData("Name DESC, (SELECT 1)")]
+        public void TestUnknownOrderIsRejectedBeforeCreatingTheSqlStatement(string propertyName)
+        {
+            var predicate = DapperPredicateVisitor.BuildPredicate(new Criteria());
+            var exception = Assert.Throws<InvalidOperationException>(() =>
+                DapperPagingBuilder<Product>.PageStatement(predicate, false,
+                    new[] { Order.Asc(propertyName) }, 0, 10));
+            Assert.Equal($"Cannot order Product by unknown property '{propertyName}'.", exception.Message);
+        }
+
         [Fact]
         public void TestCountStatementIgnoresOrderAndPaging()
         {
