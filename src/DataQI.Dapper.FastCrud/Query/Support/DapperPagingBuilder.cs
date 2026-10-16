@@ -16,13 +16,14 @@ namespace DataQI.Dapper.FastCrud.Query.Support
         public static void EnsurePage(IPageRequest page)
         {
             if (page == null)
-                throw new ArgumentException("Page request must not be null", nameof(page));
+                throw new ArgumentException("Page must not be null", nameof(page));
             if (page.PageIndex < 0 || page.PageSize < 1 || page.PageSize == int.MaxValue)
                 throw new ArgumentException("Page index must not be negative and page size must be between 1 and int.MaxValue - 1", nameof(page));
             if (page.Offset != (long)page.PageIndex * page.PageSize || page.Offset > int.MaxValue)
-                throw new ArgumentException("Page offset must equal PageIndex * PageSize and must not exceed int.MaxValue", nameof(page));
-            if (page.Orders == null || page.Orders.Any(o => o == null || string.IsNullOrEmpty(o.PropertyName)))
-                throw new ArgumentException("Page orders must not be null or contain null orders or empty property names", nameof(page));
+                throw new ArgumentException("Page offset must equal index times size and must not exceed int.MaxValue", nameof(page));
+            if (page.Orders == null || page.Orders.Any(o => o == null || string.IsNullOrWhiteSpace(o.PropertyName) ||
+                (o.Direction != OrderDirection.Asc && o.Direction != OrderDirection.Desc)))
+                throw new ArgumentException("Page orders must contain valid property names and directions", nameof(page));
         }
 
         public static IReadOnlyList<IOrderCriterion> MergeOrders(

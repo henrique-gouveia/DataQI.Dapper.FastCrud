@@ -25,6 +25,20 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void Dispose() => connection.BulkDelete<Product>();
 
         [Fact]
+        public void TestEnsurePageRejectsWhitespaceOrderProperty()
+        {
+            Assert.Throws<ArgumentException>(() => DapperPagingBuilder<Product>.EnsurePage(
+                new CustomPageRequest(0, 10, 0, new[] { Order.Asc(" ") })));
+        }
+
+        [Fact]
+        public void TestEnsurePageRejectsInvalidOrderDirection()
+        {
+            Assert.Throws<ArgumentException>(() => DapperPagingBuilder<Product>.EnsurePage(
+                new CustomPageRequest(0, 10, 0, new[] { new OrderCriterion("Id", (OrderDirection)123) })));
+        }
+
+        [Fact]
         public void TestKeyPropertiesComeFromTheMapping()
         {
             Assert.Equal(new[] { nameof(Product.Id) }, DapperPagingBuilder<Product>.KeyProperties());
