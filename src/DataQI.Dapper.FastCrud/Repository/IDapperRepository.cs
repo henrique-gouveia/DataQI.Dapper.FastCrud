@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 
 using DataQI.Commons.Repository;
+using DataQI.Commons.Repository.Paging;
 
 namespace DataQI.Dapper.FastCrud.Repository
 {
@@ -16,7 +17,7 @@ namespace DataQI.Dapper.FastCrud.Repository
     /// statement builder. Where the base contract takes an identifier, pass an entity instance whose key
     /// properties are filled in.
     /// </remarks>
-    public interface IDapperRepository<TEntity> : ICrudRepository<TEntity, TEntity>
+    public interface IDapperRepository<TEntity> : IPagedRepository<TEntity, TEntity>
         where TEntity : class
     {
         /// <summary>Finds the entities selected by a Dapper.FastCrud statement.</summary>

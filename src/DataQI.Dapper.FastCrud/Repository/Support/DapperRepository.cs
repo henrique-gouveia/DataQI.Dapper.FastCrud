@@ -11,6 +11,7 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
+using DataQI.Commons.Repository.Paging;
 
 using DataQI.Dapper.FastCrud.Query.Support;
 
@@ -127,6 +128,22 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             CancellationToken cancellationToken = default)
             => (await connection.FindAsync<TEntity>(CriteriaStatement(criteriaBuilder, 2))).SingleOrDefault();
 
+
+        /// <inheritdoc />
+        public ISlice<TEntity> FindSlice(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
+            => throw new NotImplementedException();
+
+        /// <inheritdoc />
+        public Task<ISlice<TEntity>> FindSliceAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
+
+        /// <inheritdoc />
+        public IPage<TEntity> FindPage(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
+            => throw new NotImplementedException();
+
+        /// <inheritdoc />
+        public Task<IPage<TEntity>> FindPageAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
+            => throw new NotImplementedException();
 
         private static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> CriteriaStatement(
             Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
