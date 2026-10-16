@@ -13,11 +13,11 @@ namespace DataQI.Dapper.FastCrud.Repository
     /// <summary>Defines the Dapper.FastCrud repository of an entity type, which is also its own identifier.</summary>
     /// <typeparam name="TEntity">The entity type.</typeparam>
     /// <remarks>
-    /// In addition to the members of <see cref="ICrudRepository{TEntity, TId}"/>, it accepts a Dapper.FastCrud
+    /// Combines the independent CRUD and paging contracts. In addition to the members of <see cref="ICrudRepository{TEntity, TId}"/>, it accepts a Dapper.FastCrud
     /// statement builder. Where the base contract takes an identifier, pass an entity instance whose key
     /// properties are filled in.
     /// </remarks>
-    public interface IDapperRepository<TEntity> : IPagedRepository<TEntity, TEntity>
+    public interface IDapperRepository<TEntity> : ICrudRepository<TEntity, TEntity>, IPagedRepository<TEntity, TEntity>
         where TEntity : class
     {
         /// <summary>Finds the entities selected by a Dapper.FastCrud statement.</summary>

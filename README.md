@@ -416,7 +416,7 @@ This provider reduces repository boilerplate for applications already using Fast
 **v4.0.0 - current source**
 
 - New! Add criteria and query-method paging through `ISlice<T>`, `IPage<T>` and `IPageRequest`.
-- Change! Provider repository interfaces now extend `IPagedRepository`; custom implementations must supply its four methods.
+- Change! Provider repository interfaces now combine the independent `ICrudRepository` and `IPagedRepository` contracts; custom implementations must supply its four methods.
 - **Breaking Change!** Replaced the public per-operator translation pipeline with internal visitors over the Commons 4.x criteria AST; removed the translation types listed in the migration guide.
 - Change! Negation emits `Not (...)`, and invalid ordering properties fail with an `ArgumentException`.
 - Change! Added XML documentation for public APIs.

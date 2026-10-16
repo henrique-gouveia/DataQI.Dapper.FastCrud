@@ -1,6 +1,8 @@
 using System;
 using System.Data;
 
+using DataQI.Commons.Repository;
+using DataQI.Commons.Repository.Paging;
 using DataQI.Dapper.FastCrud.Repository;
 using DataQI.Dapper.FastCrud.Repository.Support;
 
@@ -19,6 +21,14 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         {
             connection = fixture.Connection;
             repositoryFactory = new DapperRepositoryFactory();
+        }
+
+        [Fact]
+        public void TestRepositoryCombinesIndependentCapabilities()
+        {
+            Assert.True(typeof(ICrudRepository<object, object>).IsAssignableFrom(typeof(IDapperRepository<object>)));
+            Assert.True(typeof(IPagedRepository<object, object>).IsAssignableFrom(typeof(IDapperRepository<object>)));
+            Assert.False(typeof(ICrudRepository<object, object>).IsAssignableFrom(typeof(IPagedRepository<object, object>)));
         }
 
         [Fact]
