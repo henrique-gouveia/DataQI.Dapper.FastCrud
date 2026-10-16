@@ -3,11 +3,15 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using DataQI.Dapper.FastCrud.Repository;
+using DataQI.Commons.Repository.Paging;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository.Products
 {
     public interface IProductRepository : IDapperRepository<Product>
     {
+        ISlice<Product> FindByDepartmentOrderByNameAsc(string department, IPageRequest page);
+        Task<IPage<Product>> FindByDepartmentAsync(string department, IPageRequest page, CancellationToken cancellationToken = default);
+
         IEnumerable<Product> FindByEanLike(string ean);
 
         Product FindByEan(string ean);
