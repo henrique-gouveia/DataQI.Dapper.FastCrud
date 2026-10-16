@@ -1,4 +1,5 @@
 using DataQI.Commons.Repository.Paging;
+using DataQI.Commons.Repository.Paging.Support;
 using DataQI.Dapper.FastCrud.Repository;
 using DataQI.Dapper.FastCrud.Repository.Support;
 

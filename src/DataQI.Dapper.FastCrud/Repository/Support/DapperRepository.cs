@@ -12,6 +12,7 @@ using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
 using DataQI.Commons.Repository.Paging;
+using DataQI.Commons.Repository.Paging.Support;
 
 using DataQI.Dapper.FastCrud.Query.Support;
 

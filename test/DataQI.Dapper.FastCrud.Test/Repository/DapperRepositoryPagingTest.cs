@@ -9,6 +9,7 @@ using Dapper.FastCrud;
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Repository.Paging;
+using DataQI.Commons.Repository.Paging.Support;
 using DataQI.Dapper.FastCrud.Repository.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Query;
@@ -140,7 +141,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         [Fact]
         public void TestPageSizeOne()
         {
-            var ids = new List<int>();
+            List<int> ids = [];
             for (var i = 0; i < 25; i++)
             {
                 var page = repository.FindPage(c => c, PageRequest.Of(i, 1));
@@ -212,9 +213,9 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         public void TestCustomPageRequestWithInvalidValuesIsRejected()
         {
             Assert.Throws<ArgumentException>(() => direct.FindSlice(c => c,
-                new CustomPageRequest(0, 0, 0, new IOrderCriterion[0])));
+                new CustomPageRequest(0, 0, 0, [])));
             Assert.Throws<ArgumentException>(() => direct.FindPage(c => c,
-                new CustomPageRequest(2, 10, 5, new IOrderCriterion[0])));
+                new CustomPageRequest(2, 10, 5, [])));
         }
 
         [Fact]

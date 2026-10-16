@@ -467,7 +467,7 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         {
             InsertTestCustomersList();
 
-            var commands = new List<IDbCommand>();
+            List<IDbCommand> commands = [];
             var observedConnection = new Mock<IDbConnection>(MockBehavior.Strict);
             observedConnection.SetupGet(c => c.State).Returns(connection.State);
             observedConnection.SetupGet(c => c.ConnectionString).Returns(connection.ConnectionString);
@@ -539,14 +539,14 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
 
         private IList<Customer> InsertTestCustomersList()
         {
-            var customers = new List<Customer>()
-            {
+            List<Customer> customers =
+            [
                 CustomerBuilder.NewInstance().Build(),
                 CustomerBuilder.NewInstance().Build(),
                 CustomerBuilder.NewInstance().Build(),
                 CustomerBuilder.NewInstance().Build(),
                 CustomerBuilder.NewInstance().Build(),
-            };
+            ];
 
             customers.ForEach(p =>
             {

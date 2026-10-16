@@ -7,6 +7,17 @@ DataQI Dapper.FastCrud creates repository implementations from C# interfaces usi
 [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
 [![License](https://img.shields.io/github/license/henrique-gouveia/DataQI.Dapper.FastCrud.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/main/LICENSE)
 
+## Features
+
+- Synchronous and asynchronous CRUD operations backed by Dapper.FastCrud.
+- Repositories declared as C# interfaces, with query methods derived from method names.
+- Criteria with comparisons, text matches, logical groups, and ordering.
+- Collection and single-entity queries, plus paging with `ISlice<T>` and `IPage<T>`.
+- Deterministic paging order with primary-key tie-breaks and total counts only when needed.
+- Native FastCrud statement builders for custom filters, ordering, and paging.
+- Repository factories, custom implementations, and Microsoft dependency injection integration.
+- Query-method completion through the transitive DataQI.Analyzers dependency.
+
 ## Getting Started
 
 ### Installing
@@ -184,7 +195,7 @@ persons = personRepository.FindByFirstNameStartingWith("Ada%");
 
 #### Paging
 
-Added to `IProductRepository` (import `DataQI.Commons.Repository.Paging`):
+Added to `IProductRepository` (import `DataQI.Commons.Repository.Paging` and `DataQI.Commons.Repository.Paging.Support`):
 
 ```csharp
 ISlice<Product> FindByDepartmentOrderByNameAsc(string department, IPageRequest page);
@@ -402,14 +413,10 @@ This provider reduces repository boilerplate for applications already using Fast
 
 ## Release Notes
 
-**4.0.0-preview.3**
-
-- Add criteria and query-method paging through `ISlice<T>`, `IPage<T>` and `IPageRequest`.
-- Provider repository interfaces now extend `IPagedRepository`; custom implementations must supply its four methods.
-
-
 **v4.0.0 - current source**
 
+- New! Add criteria and query-method paging through `ISlice<T>`, `IPage<T>` and `IPageRequest`.
+- Change! Provider repository interfaces now extend `IPagedRepository`; custom implementations must supply its four methods.
 - **Breaking Change!** Replaced the public per-operator translation pipeline with internal visitors over the Commons 4.x criteria AST; removed the translation types listed in the migration guide.
 - Change! Negation emits `Not (...)`, and invalid ordering properties fail with an `ArgumentException`.
 - Change! Added XML documentation for public APIs.

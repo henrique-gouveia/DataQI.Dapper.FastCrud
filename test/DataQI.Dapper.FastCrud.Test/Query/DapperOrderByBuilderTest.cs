@@ -16,7 +16,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         [Fact]
         public void TestBuildsAscendingAndDescendingInCallSequence()
         {
-            var orders = new List<IOrderCriterion> { Order.Asc("FirstName"), Order.Desc("LastName") };
+            List<IOrderCriterion> orders = [Order.Asc("FirstName"), Order.Desc("LastName")];
 
             var orderBy = DapperOrderByBuilder.BuildOrderBy(orders);
 

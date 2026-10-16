@@ -5,6 +5,7 @@ using Xunit;
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Repository.Paging;
+using DataQI.Commons.Repository.Paging.Support;
 using DataQI.Dapper.FastCrud.Query.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
@@ -54,7 +55,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         [Fact]
-        public void TestCountStatementIgnoresOrderAndWindow()
+        public void TestCountStatementIgnoresOrderAndPaging()
         {
             var predicate = DapperPredicateVisitor.BuildPredicate(new Criteria());
             Assert.Equal(25, connection.Count<Product>(DapperPagingBuilder<Product>.CountStatement(predicate, false)));
@@ -87,7 +88,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestMergeAppendsEveryPartOfACompositeKey()
         {
             var orders = DapperPagingBuilder<Product>.MergeOrders(
-                new IOrderCriterion[0], PageRequest.Of(0, 10), new[] { "A", "B" });
+                [], PageRequest.Of(0, 10), new[] { "A", "B" });
 
             Assert.Equal(new[] { "A", "B" }, orders.Select(o => o.PropertyName));
         }
@@ -96,7 +97,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestMergeFailsWithoutKeyAndWithoutExplicitOrder()
         {
             var exception = Assert.Throws<InvalidOperationException>(() =>
-                DapperPagingBuilder<Product>.MergeOrders(new IOrderCriterion[0], PageRequest.Of(0, 10), new string[0]));
+                DapperPagingBuilder<Product>.MergeOrders([], PageRequest.Of(0, 10), []));
 
             Assert.Contains(nameof(Product), exception.Message);
         }
@@ -105,7 +106,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestMergeAcceptsAnEntityWithoutKeyWhenAnOrderIsGiven()
         {
             var orders = DapperPagingBuilder<Product>.MergeOrders(
-                new[] { Order.Asc("Name") }, PageRequest.Of(0, 10), new string[0]);
+                new[] { Order.Asc("Name") }, PageRequest.Of(0, 10), []);
 
             Assert.Single(orders);
         }
@@ -127,7 +128,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         [Fact]
         public void TestEnsurePageAcceptsAValidCustomImplementation()
         {
-            DapperPagingBuilder<Product>.EnsurePage(new CustomPageRequest(2, 10, 20, new IOrderCriterion[0]));
+            DapperPagingBuilder<Product>.EnsurePage(new CustomPageRequest(2, 10, 20, []));
         }
 
         [Theory]
@@ -139,7 +140,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         [InlineData(2, 10, -20L)]
         public void TestEnsurePageRejectsInconsistentCustomImplementations(int index, int size, long offset)
         {
-            var page = new CustomPageRequest(index, size, offset, new IOrderCriterion[0]);
+            var page = new CustomPageRequest(index, size, offset, []);
 
             Assert.Throws<ArgumentException>(() => DapperPagingBuilder<Product>.EnsurePage(page));
         }
