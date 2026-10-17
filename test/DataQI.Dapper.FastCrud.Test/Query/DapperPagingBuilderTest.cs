@@ -1,9 +1,12 @@
 using System;
+using System.Data;
 using System.Linq;
+
 using Dapper.FastCrud;
 using Xunit;
-using DataQI.Commons.Query;
+
 using DataQI.Commons.Query.Support;
+
 using DataQI.Dapper.FastCrud.Query.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
@@ -12,7 +15,7 @@ namespace DataQI.Dapper.FastCrud.Test.Query
 {
     public sealed class DapperPagingBuilderTest : IClassFixture<DbFixture>, IDisposable
     {
-        private readonly System.Data.IDbConnection connection;
+        private readonly IDbConnection connection;
 
         public DapperPagingBuilderTest(DbFixture fixture)
         {
@@ -20,8 +23,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             for (var i = 0; i < 25; i++)
                 connection.Insert(ProductBuilder.NewInstance().Build());
         }
-
-        public void Dispose() => connection.BulkDelete<Product>();
 
         [Fact]
         public void TestKeyPropertiesComeFromTheMapping()
@@ -35,12 +36,16 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             var original = OrmConfiguration.GetDefaultEntityMapping<ReconfigurableEntity>();
             try
             {
-                Assert.Equal(new[] { "Id" }, DapperPagingBuilder<ReconfigurableEntity>.KeyProperties());
+                var initialKeys = DapperPagingBuilder<ReconfigurableEntity>.KeyProperties();
                 var replacement = original.Clone()
                     .SetProperty(e => e.Id, p => p.SetPrimaryKey(false))
                     .SetProperty(e => e.AlternateId, p => p.SetPrimaryKey(true));
                 OrmConfiguration.SetDefaultEntityMapping(replacement);
-                Assert.Equal(new[] { "AlternateId" }, DapperPagingBuilder<ReconfigurableEntity>.KeyProperties());
+
+                var updatedKeys = DapperPagingBuilder<ReconfigurableEntity>.KeyProperties();
+
+                Assert.Equal(new[] { nameof(ReconfigurableEntity.Id) }, initialKeys);
+                Assert.Equal(new[] { nameof(ReconfigurableEntity.AlternateId) }, updatedKeys);
             }
             finally
             {
@@ -48,19 +53,14 @@ namespace DataQI.Dapper.FastCrud.Test.Query
             }
         }
 
-        private sealed class ReconfigurableEntity
-        {
-            [System.ComponentModel.DataAnnotations.Key]
-            public int Id { get; set; }
-            public int AlternateId { get; set; }
-        }
-
         [Fact]
         public void TestPageStatementSkipsAndLimitsTheRows()
         {
             var predicate = DapperPredicateVisitor.BuildPredicate(new Criteria());
+
             var statement = DapperPagingBuilder<Product>.PageStatement(
-                predicate, false, new[] { Order.Asc("Id") }, 10, 10);
+                predicate, false, new[] { Order.Asc(nameof(Product.Id)) }, 10, 10);
+
             Assert.Equal(10, connection.Find<Product>(statement).Count());
         }
 
@@ -71,9 +71,11 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestUnknownOrderIsRejectedBeforeCreatingTheSqlStatement(string propertyName)
         {
             var predicate = DapperPredicateVisitor.BuildPredicate(new Criteria());
+
             var exception = Assert.Throws<InvalidOperationException>(() =>
                 DapperPagingBuilder<Product>.PageStatement(predicate, false,
                     new[] { Order.Asc(propertyName) }, 0, 10));
+
             Assert.Equal($"Cannot order Product by unknown property '{propertyName}'.", exception.Message);
         }
 
@@ -81,8 +83,19 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         public void TestCountStatementIgnoresOrderAndPaging()
         {
             var predicate = DapperPredicateVisitor.BuildPredicate(new Criteria());
-            Assert.Equal(25, connection.Count<Product>(DapperPagingBuilder<Product>.CountStatement(predicate, false)));
+
+            var countStatement = DapperPagingBuilder<Product>.CountStatement(predicate, false);
+
+            Assert.Equal(25, connection.Count<Product>(countStatement));
         }
 
+        public void Dispose() => connection.BulkDelete<Product>();
+
+        private sealed class ReconfigurableEntity
+        {
+            [System.ComponentModel.DataAnnotations.Key]
+            public int Id { get; set; }
+            public int AlternateId { get; set; }
+        }
     }
 }

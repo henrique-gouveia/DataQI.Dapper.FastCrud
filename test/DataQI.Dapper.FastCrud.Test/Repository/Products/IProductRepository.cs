@@ -2,8 +2,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using DataQI.Dapper.FastCrud.Repository;
 using DataQI.Commons.Repository.Paging;
+using DataQI.Dapper.FastCrud.Repository;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository.Products
 {
