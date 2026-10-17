@@ -5,262 +5,477 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Dapper.FastCrud;
+using Xunit;
+
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Repository.Paging;
 using DataQI.Commons.Repository.Paging.Support;
+
 using DataQI.Dapper.FastCrud.Repository.Support;
 using DataQI.Dapper.FastCrud.Test.Fixtures;
-using DataQI.Dapper.FastCrud.Test.Query;
 using DataQI.Dapper.FastCrud.Test.Repository.Products;
-using Xunit;
 
 namespace DataQI.Dapper.FastCrud.Test.Repository
 {
     public sealed class DapperRepositoryPagingTest : IClassFixture<DbFixture>, IDisposable
     {
         private readonly IDbConnection connection;
-        private readonly IProductRepository repository;
-        private readonly DapperRepository<Product> direct;
+        private readonly IProductRepository productRepository;
+        private readonly DapperRepository<Product> directRepository;
 
         public DapperRepositoryPagingTest(DbFixture fixture)
         {
             connection = fixture.Connection;
-            repository = fixture.ProductRepository;
-            direct = new DapperRepository<Product>(connection);
-            Seed(25);
+            productRepository = fixture.ProductRepository;
+            directRepository = new DapperRepository<Product>(connection);
+            InsertProducts(25);
         }
 
-        private void Seed(int count, string department = "D1")
+        [Theory]
+        [InlineData(0, 10, true, false)]
+        [InlineData(2, 5, false, true)]
+        [InlineData(5, 0, false, true)]
+        public void TestFindSliceReturnsRequestedPage(int pageIndex, int itemCount, bool hasNext, bool hasPrevious)
         {
-            for (var i = 0; i < count; i++)
-            {
-                var product = ProductBuilder.NewInstance().Build();
-                product.Department = department;
-                product.Name = "Name" + i % 5;
-                product.Ean = department + i.ToString("D4");
-                connection.Insert(product);
-            }
+            var request = PageRequest.Of(pageIndex, 10);
+
+            var slice = productRepository.FindSlice(c => c, request);
+
+            Assert.Equal(itemCount, slice.Items.Count);
+            Assert.Equal(hasNext, slice.HasNext);
+            Assert.Equal(hasPrevious, slice.HasPrevious);
+        }
+
+        [Theory]
+        [InlineData(0, 10, true, false)]
+        [InlineData(2, 5, false, true)]
+        [InlineData(5, 0, false, true)]
+        public async Task TestFindSliceAsyncReturnsRequestedPage(int pageIndex, int itemCount, bool hasNext, bool hasPrevious)
+        {
+            var request = PageRequest.Of(pageIndex, 10);
+
+            var slice = await productRepository.FindSliceAsync(c => c, request);
+
+            Assert.Equal(itemCount, slice.Items.Count);
+            Assert.Equal(hasNext, slice.HasNext);
+            Assert.Equal(hasPrevious, slice.HasPrevious);
+        }
+
+        [Theory]
+        [InlineData(0, 10, true)]
+        [InlineData(2, 5, false)]
+        [InlineData(5, 0, false)]
+        public void TestFindPageReturnsRequestedPage(int pageIndex, int itemCount, bool hasNext)
+        {
+            var request = PageRequest.Of(pageIndex, 10);
+
+            var page = productRepository.FindPage(c => c, request);
+
+            Assert.Equal(itemCount, page.Items.Count);
+            Assert.Equal(hasNext, page.HasNext);
+        }
+
+        [Theory]
+        [InlineData(0, 10, true)]
+        [InlineData(2, 5, false)]
+        [InlineData(5, 0, false)]
+        public async Task TestFindPageAsyncReturnsRequestedPage(int pageIndex, int itemCount, bool hasNext)
+        {
+            var request = PageRequest.Of(pageIndex, 10);
+
+            var page = await productRepository.FindPageAsync(c => c, request);
+
+            Assert.Equal(itemCount, page.Items.Count);
+            Assert.Equal(hasNext, page.HasNext);
         }
 
         [Fact]
-        public void TestFirstPage()
+        public void TestFindSliceHasNoNextPageWhenLastPageIsFull()
         {
-            var slice = repository.FindSlice(c => c, PageRequest.Of(0, 10));
+            ReplaceProducts(20);
+
+            var slice = productRepository.FindSlice(c => c, PageRequest.Of(1, 10));
+
             Assert.Equal(10, slice.Items.Count);
-            Assert.True(slice.HasNext);
-            Assert.False(slice.HasPrevious);
-            var page = repository.FindPage(c => c, PageRequest.Of(0, 10));
+            Assert.False(slice.HasNext);
+        }
+
+        [Fact]
+        public async Task TestFindSliceAsyncHasNoNextPageWhenLastPageIsFull()
+        {
+            ReplaceProducts(20);
+
+            var slice = await productRepository.FindSliceAsync(c => c, PageRequest.Of(1, 10));
+
+            Assert.Equal(10, slice.Items.Count);
+            Assert.False(slice.HasNext);
+        }
+
+        [Fact]
+        public void TestFindPageHasNoNextPageWhenLastPageIsFull()
+        {
+            ReplaceProducts(20);
+
+            var page = productRepository.FindPage(c => c, PageRequest.Of(1, 10));
+
+            Assert.Equal(10, page.Items.Count);
+            Assert.False(page.HasNext);
+            Assert.Equal(20, page.TotalCount);
+        }
+
+        [Fact]
+        public async Task TestFindPageAsyncHasNoNextPageWhenLastPageIsFull()
+        {
+            ReplaceProducts(20);
+
+            var page = await productRepository.FindPageAsync(c => c, PageRequest.Of(1, 10));
+
+            Assert.Equal(10, page.Items.Count);
+            Assert.False(page.HasNext);
+            Assert.Equal(20, page.TotalCount);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(2)]
+        [InlineData(5)]
+        public void TestFindPageReportsTotalRegardlessOfPageIndex(int pageIndex)
+        {
+            var page = productRepository.FindPage(c => c, PageRequest.Of(pageIndex, 10));
+
             Assert.Equal(25, page.TotalCount);
             Assert.Equal(3, page.TotalPages);
         }
 
-        [Fact]
-        public async Task TestLastPartialPage()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(2)]
+        [InlineData(5)]
+        public async Task TestFindPageAsyncReportsTotalRegardlessOfPageIndex(int pageIndex)
         {
-            var slice = repository.FindSlice(c => c, PageRequest.Of(2, 10));
-            Assert.Equal(5, slice.Items.Count);
-            Assert.False(slice.HasNext);
-            var page = repository.FindPage(c => c, PageRequest.Of(2, 10));
-            Assert.Equal(5, page.Items.Count);
-            Assert.False(page.HasNext);
+            var page = await productRepository.FindPageAsync(c => c, PageRequest.Of(pageIndex, 10));
+
             Assert.Equal(25, page.TotalCount);
-            var asyncPage = await repository.FindPageAsync(c => c, PageRequest.Of(2, 10));
-            Assert.Equal(5, asyncPage.Items.Count);
-            Assert.False(asyncPage.HasNext);
-            Assert.Equal(25, asyncPage.TotalCount);
+            Assert.Equal(3, page.TotalPages);
         }
 
-        [Fact]
-        public void TestExactMultipleLastPage()
+        [Theory]
+        [InlineData(0)]
+        [InlineData(2)]
+        [InlineData(5)]
+        public void TestFindPageTotalCountsOnlyMatchingProducts(int pageIndex)
         {
-            connection.BulkDelete<Product>();
-            Seed(20);
-            var slice = repository.FindSlice(c => c, PageRequest.Of(1, 10));
-            Assert.Equal(10, slice.Items.Count);
-            Assert.False(slice.HasNext);
-            var page = repository.FindPage(c => c, PageRequest.Of(1, 10));
-            Assert.Equal(20, page.TotalCount);
-            Assert.False(page.HasNext);
-        }
+            InsertProducts(12, "D2");
+            var request = PageRequest.Of(pageIndex, 10);
 
-        [Fact]
-        public async Task TestSliceAsyncFirstAndLastPage()
-        {
-            var first = await repository.FindSliceAsync(c => c, PageRequest.Of(0, 10));
-            Assert.Equal(10, first.Items.Count);
-            Assert.True(first.HasNext);
-            Assert.False(first.HasPrevious);
-            var last = await repository.FindSliceAsync(c => c, PageRequest.Of(2, 10));
-            Assert.Equal(5, last.Items.Count);
-            Assert.False(last.HasNext);
-            Assert.True(last.HasPrevious);
-            var beyond = await repository.FindSliceAsync(c => c, PageRequest.Of(5, 10));
-            Assert.Empty(beyond.Items);
-            Assert.False(beyond.HasNext);
-            connection.BulkDelete<Product>();
-            Seed(20);
-            var exact = await repository.FindSliceAsync(c => c, PageRequest.Of(1, 10));
-            Assert.Equal(10, exact.Items.Count);
-            Assert.False(exact.HasNext);
-        }
+            var page = productRepository.FindPage(c => c.Add(Restrictions.Equal(nameof(Product.Department), "D1")), request);
 
-        [Fact]
-        public async Task TestPageBeyondTheEnd()
-        {
-            var page = repository.FindPage(c => c, PageRequest.Of(5, 10));
-            Assert.Empty(page.Items);
             Assert.Equal(25, page.TotalCount);
-            var asyncPage = await repository.FindPageAsync(c => c, PageRequest.Of(5, 10));
-            Assert.Empty(asyncPage.Items);
-            Assert.Equal(25, asyncPage.TotalCount);
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(2)]
+        [InlineData(5)]
+        public async Task TestFindPageAsyncTotalCountsOnlyMatchingProducts(int pageIndex)
+        {
+            InsertProducts(12, "D2");
+            var request = PageRequest.Of(pageIndex, 10);
+
+            var page = await productRepository.FindPageAsync(c => c.Add(Restrictions.Equal(nameof(Product.Department), "D1")), request);
+
+            Assert.Equal(25, page.TotalCount);
         }
 
         [Fact]
-        public async Task TestPageTotalRespectsTheCriteria()
+        public void TestFindPageReturnsEmptyResultWhenNoProductsMatch()
         {
-            Seed(12, "D2");
-            foreach (var index in new[] { 0, 5 })
-            {
-                Func<ICriteria, ICriteria> criteria = c => c.Add(Restrictions.Equal("Department", "D1"));
-                Assert.Equal(25, repository.FindPage(criteria, PageRequest.Of(index, 10)).TotalCount);
-                Assert.Equal(25, (await repository.FindPageAsync(criteria, PageRequest.Of(index, 10))).TotalCount);
-            }
-        }
+            var request = PageRequest.Of(0, 10);
 
-        [Fact]
-        public void TestFilterWithoutResults()
-        {
-            var page = repository.FindPage(c => c.Add(Restrictions.Equal("Department", "missing")), PageRequest.Of(0, 10));
+            var page = productRepository.FindPage(c => c.Add(Restrictions.Equal(nameof(Product.Department), "Missing")), request);
+
             Assert.Empty(page.Items);
             Assert.Equal(0, page.TotalCount);
             Assert.Equal(0, page.TotalPages);
         }
 
         [Fact]
-        public void TestPageSizeOne()
+        public async Task TestFindPageAsyncReturnsEmptyResultWhenNoProductsMatch()
         {
-            List<int> ids = [];
-            for (var i = 0; i < 25; i++)
-            {
-                var page = repository.FindPage(c => c, PageRequest.Of(i, 1));
-                ids.Add(Assert.Single(page.Items).Id);
-                Assert.Equal(25, page.TotalPages);
-            }
-            Assert.Equal(25, ids.Distinct().Count());
+            var request = PageRequest.Of(0, 10);
+
+            var page = await productRepository.FindPageAsync(c => c.Add(Restrictions.Equal(nameof(Product.Department), "Missing")), request);
+
+            Assert.Empty(page.Items);
+            Assert.Equal(0, page.TotalCount);
+            Assert.Equal(0, page.TotalPages);
         }
 
         [Fact]
-        public void TestRepeatedNamesWithOrderByNameCoverAllRowsOnce()
+        public void TestFindPageWithSizeOneReturnsEveryProductOnce()
         {
-            var ids = Enumerable.Range(0, 3).SelectMany(i => repository.FindSlice(c => c,
-                PageRequest.Of(i, 10, Order.Asc("Name"))).Items.Select(p => p.Id)).ToList();
-            Assert.Equal(25, ids.Count);
-            Assert.Equal(25, ids.Distinct().Count());
+            var expectedIds = connection.Find<Product>().OrderBy(p => p.Id).Select(p => p.Id).ToArray();
+
+            var pages = Enumerable.Range(0, 25)
+                .Select(index => productRepository.FindPage(c => c, PageRequest.Of(index, 1)))
+                .ToArray();
+
+            Assert.Equal(expectedIds, pages.Select(page => Assert.Single(page.Items).Id));
+            Assert.All(pages, page => Assert.Equal(25, page.TotalPages));
         }
 
         [Fact]
-        public void TestMethodNameOrderThenPageOrders()
+        public async Task TestFindPageAsyncWithSizeOneReturnsEveryProductOnce()
         {
-            var result = repository.FindByDepartmentOrderByNameAsc("D1",
-                PageRequest.Of(0, 25, Order.Desc("Name"), Order.Desc("Ean")));
-            var expected = connection.Find<Product>().OrderBy(p => p.Name).ThenByDescending(p => p.Ean).Select(p => p.Id);
-            Assert.Equal(expected, result.Items.Select(p => p.Id));
+            var expectedIds = connection.Find<Product>().OrderBy(p => p.Id).Select(p => p.Id).ToArray();
+            List<IPage<Product>> pages = [];
+
+            for (var index = 0; index < 25; index++)
+                pages.Add(await productRepository.FindPageAsync(c => c, PageRequest.Of(index, 1)));
+
+            Assert.Equal(expectedIds, pages.Select(page => Assert.Single(page.Items).Id));
+            Assert.All(pages, page => Assert.Equal(25, page.TotalPages));
         }
 
         [Fact]
-        public void TestEmptyCriteriaPagesWholeTable()
+        public void TestFindSliceUsesPrimaryKeyToBreakOrderingTies()
         {
-            Assert.Equal(25, repository.FindPage(c => c, PageRequest.Of(0, 30)).TotalCount);
+            var expectedIds = connection.Find<Product>().OrderBy(p => p.Name).ThenBy(p => p.Id).Select(p => p.Id).ToArray();
+
+            var actualIds = Enumerable.Range(0, 3)
+                .SelectMany(index => productRepository.FindSlice(c => c,
+                    PageRequest.Of(index, 10, Order.Asc(nameof(Product.Name)))).Items)
+                .Select(p => p.Id);
+
+            Assert.Equal(expectedIds, actualIds);
         }
 
         [Fact]
-        public async Task TestNullPageRequestFailsOnTheRepository()
+        public void TestQueryMethodOrderingTakesPrecedenceOverRequestOrdering()
         {
-            Assert.Throws<ArgumentException>(() => direct.FindSlice(c => c, null));
-            Assert.Throws<ArgumentException>(() => direct.FindPage(c => c, null));
-            await Assert.ThrowsAsync<ArgumentException>(() => direct.FindSliceAsync(c => c, null));
-            await Assert.ThrowsAsync<ArgumentException>(() => direct.FindPageAsync(c => c, null));
+            var request = PageRequest.Of(0, 25, Order.Desc(nameof(Product.Name)), Order.Desc(nameof(Product.Ean)));
+            var expectedIds = connection.Find<Product>().OrderBy(p => p.Name).ThenByDescending(p => p.Ean).Select(p => p.Id).ToArray();
+
+            var slice = productRepository.FindByDepartmentOrderByNameAsc("D1", request);
+
+            Assert.Equal(expectedIds, slice.Items.Select(p => p.Id));
         }
 
         [Fact]
-        public void TestNullPageRequestFailsThroughTheProxy()
+        public void TestFindPageWithEmptyCriteriaReturnsAllProducts()
         {
-            var exception = Assert.Throws<TargetInvocationException>(() => repository.FindByDepartmentOrderByNameAsc("D1", null));
-            Assert.IsType<ArgumentException>(exception.GetBaseException());
+            var page = productRepository.FindPage(c => c, PageRequest.Of(0, 30));
+
+            Assert.Equal(25, page.Items.Count);
+            Assert.Equal(25, page.TotalCount);
+        }
+
+        [Theory]
+        [MemberData(nameof(InvalidPageRequests))]
+        public void TestFindSliceRejectsInvalidPageRequest(IPageRequest request)
+        {
+            Assert.Throws<ArgumentException>(() => directRepository.FindSlice(c => c, request));
+        }
+
+        [Theory]
+        [MemberData(nameof(InvalidPageRequests))]
+        public async Task TestFindSliceAsyncRejectsInvalidPageRequest(IPageRequest request)
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => directRepository.FindSliceAsync(c => c, request));
+        }
+
+        [Theory]
+        [MemberData(nameof(InvalidPageRequests))]
+        public void TestFindPageRejectsInvalidPageRequest(IPageRequest request)
+        {
+            Assert.Throws<ArgumentException>(() => directRepository.FindPage(c => c, request));
+        }
+
+        [Theory]
+        [MemberData(nameof(InvalidPageRequests))]
+        public async Task TestFindPageAsyncRejectsInvalidPageRequest(IPageRequest request)
+        {
+            await Assert.ThrowsAsync<ArgumentException>(() => directRepository.FindPageAsync(c => c, request));
         }
 
         [Fact]
-        public async Task TestOffsetBeyondIntMaxIsRejectedOnTheRepository()
-        {
-            var page = PageRequest.Of(int.MaxValue, 10);
-            Assert.Throws<ArgumentException>(() => direct.FindSlice(c => c, page));
-            Assert.Throws<ArgumentException>(() => direct.FindPage(c => c, page));
-            await Assert.ThrowsAsync<ArgumentException>(() => direct.FindSliceAsync(c => c, page));
-            await Assert.ThrowsAsync<ArgumentException>(() => direct.FindPageAsync(c => c, page));
-        }
-
-        [Fact]
-        public void TestOffsetBeyondIntMaxIsRejectedThroughTheProxy()
+        public void TestQueryMethodRejectsNullPageRequest()
         {
             var exception = Assert.Throws<TargetInvocationException>(() =>
-                repository.FindByDepartmentOrderByNameAsc("D1", PageRequest.Of(int.MaxValue, 10)));
+                productRepository.FindByDepartmentOrderByNameAsc("D1", null));
+
             Assert.IsType<ArgumentException>(exception.GetBaseException());
         }
 
         [Fact]
-        public void TestCustomPageRequestWithInvalidValuesIsRejected()
+        public void TestQueryMethodRejectsOffsetBeyondIntMax()
         {
-            Assert.Throws<ArgumentException>(() => direct.FindSlice(c => c,
-                new CustomPageRequest(0, 0, 0, [])));
-            Assert.Throws<ArgumentException>(() => direct.FindPage(c => c,
-                new CustomPageRequest(2, 10, 5, [])));
+            var request = PageRequest.Of(int.MaxValue, 10);
+
+            var exception = Assert.Throws<TargetInvocationException>(() =>
+                productRepository.FindByDepartmentOrderByNameAsc("D1", request));
+
+            Assert.IsType<ArgumentException>(exception.GetBaseException());
         }
 
         [Theory]
         [InlineData("Nope")]
         [InlineData("Name; DROP TABLE Products")]
         [InlineData("Name DESC, (SELECT 1)")]
-        public async Task TestUnknownOrderPropertyFails(string propertyName)
+        public void TestFindSliceRejectsUnknownOrderProperty(string propertyName)
         {
-            var page = PageRequest.Of(0, 10, Order.Asc(propertyName));
-            var message = $"Cannot order Product by unknown property '{propertyName}'.";
-            Assert.Equal(message, Assert.Throws<InvalidOperationException>(() => direct.FindSlice(c => c, page)).Message);
-            Assert.Equal(message, Assert.Throws<InvalidOperationException>(() => direct.FindPage(c => c, page)).Message);
-            Assert.Equal(message, (await Assert.ThrowsAsync<InvalidOperationException>(() => direct.FindSliceAsync(c => c, page))).Message);
-            Assert.Equal(message, (await Assert.ThrowsAsync<InvalidOperationException>(() => direct.FindPageAsync(c => c, page))).Message);
-            Assert.Equal(25, direct.FindPage(c => c, PageRequest.Of(0, 10)).TotalCount);
+            var request = PageRequest.Of(0, 10, Order.Asc(propertyName));
+
+            var exception = Assert.Throws<InvalidOperationException>(() => directRepository.FindSlice(c => c, request));
+
+            Assert.Equal($"Cannot order Product by unknown property '{propertyName}'.", exception.Message);
+        }
+
+        [Theory]
+        [InlineData("Nope")]
+        [InlineData("Name; DROP TABLE Products")]
+        [InlineData("Name DESC, (SELECT 1)")]
+        public async Task TestFindSliceAsyncRejectsUnknownOrderProperty(string propertyName)
+        {
+            var request = PageRequest.Of(0, 10, Order.Asc(propertyName));
+
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => directRepository.FindSliceAsync(c => c, request));
+
+            Assert.Equal($"Cannot order Product by unknown property '{propertyName}'.", exception.Message);
+        }
+
+        [Theory]
+        [InlineData("Nope")]
+        [InlineData("Name; DROP TABLE Products")]
+        [InlineData("Name DESC, (SELECT 1)")]
+        public void TestFindPageRejectsUnknownOrderProperty(string propertyName)
+        {
+            var request = PageRequest.Of(0, 10, Order.Asc(propertyName));
+
+            var exception = Assert.Throws<InvalidOperationException>(() => directRepository.FindPage(c => c, request));
+
+            Assert.Equal($"Cannot order Product by unknown property '{propertyName}'.", exception.Message);
+        }
+
+        [Theory]
+        [InlineData("Nope")]
+        [InlineData("Name; DROP TABLE Products")]
+        [InlineData("Name DESC, (SELECT 1)")]
+        public async Task TestFindPageAsyncRejectsUnknownOrderProperty(string propertyName)
+        {
+            var request = PageRequest.Of(0, 10, Order.Asc(propertyName));
+
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => directRepository.FindPageAsync(c => c, request));
+
+            Assert.Equal($"Cannot order Product by unknown property '{propertyName}'.", exception.Message);
         }
 
         [Fact]
-        public async Task TestQueryMethodWithPageRequestAndTokenMatchesFindSlice()
+        public async Task TestQueryMethodWithTokenReturnsTheSamePageAsCriteria()
         {
-            using var source = new CancellationTokenSource();
-            var request = PageRequest.Of(1, 10, Order.Desc("Ean"));
-            var named = await repository.FindByDepartmentAsync("D1", request, source.Token);
-            var criteria = await repository.FindPageAsync(c => c.Add(Restrictions.Equal("Department", "D1")), request, source.Token);
-            Assert.Equal(criteria.Items.Select(p => p.Id), named.Items.Select(p => p.Id));
+            var request = PageRequest.Of(1, 10, Order.Desc(nameof(Product.Ean)));
+            var expected = await productRepository.FindPageAsync(
+                c => c.Add(Restrictions.Equal(nameof(Product.Department), "D1")), request);
+
+            var actual = await productRepository.FindByDepartmentAsync("D1", request, CancellationToken.None);
+
+            Assert.Equal(expected.Items.Select(p => p.Id), actual.Items.Select(p => p.Id));
         }
 
         [Fact]
-        public async Task TestCancelledTokenIsNotObserved()
+        public async Task TestFindSliceAsyncIgnoresCancelledToken()
         {
             using var source = new CancellationTokenSource();
             source.Cancel();
-            var slice = await repository.FindSliceAsync(c => c, PageRequest.Of(0, 10), source.Token);
-            Assert.Equal(10, slice.Items.Count);
-            var page = await repository.FindByDepartmentAsync("D1", PageRequest.Of(0, 10), source.Token);
-            Assert.Equal(25, page.TotalCount);
+            var request = PageRequest.Of(0, 10);
+
+            var result = await productRepository.FindSliceAsync(c => c, request, source.Token);
+
+            Assert.Equal(10, result.Items.Count);
         }
 
         [Fact]
-        public void TestSliceRunsOneCommandAndPageDeducesTheTotal()
+        public async Task TestFindPageAsyncIgnoresCancelledToken()
         {
-            Assert.Equal(25, repository.FindPage(c => c, PageRequest.Of(2, 10)).TotalCount);
-            Assert.Equal(25, repository.FindPage(c => c, PageRequest.Of(0, 10)).TotalCount);
+            using var source = new CancellationTokenSource();
+            source.Cancel();
+            var request = PageRequest.Of(0, 10);
+
+            var result = await productRepository.FindPageAsync(c => c, request, source.Token);
+
+            Assert.Equal(10, result.Items.Count);
+        }
+
+        [Fact]
+        public async Task TestQueryMethodIgnoresCancelledToken()
+        {
+            using var source = new CancellationTokenSource();
+            source.Cancel();
+
+            var page = await productRepository.FindByDepartmentAsync("D1", PageRequest.Of(0, 10), source.Token);
+
+            Assert.Equal(25, page.TotalCount);
+        }
+
+        [Theory]
+        [InlineData("Name; DROP TABLE Products")]
+        [InlineData("Name DESC, (SELECT 1)")]
+        public void TestRejectedOrderLeavesProductsUnchanged(string propertyName)
+        {
+            var expectedIds = connection.Find<Product>().OrderBy(p => p.Id).Select(p => p.Id).ToArray();
+            var request = PageRequest.Of(0, 10, Order.Asc(propertyName));
+
+            Assert.Throws<InvalidOperationException>(() => directRepository.FindSlice(c => c, request));
+
+            var actualIds = connection.Find<Product>().OrderBy(p => p.Id).Select(p => p.Id);
+            Assert.Equal(expectedIds, actualIds);
+        }
+
+        public static IEnumerable<object[]> InvalidPageRequests()
+        {
+            yield return [null];
+            yield return [PageRequest.Of(int.MaxValue, 10)];
+            yield return [new CustomPageRequest(0, 0, 0, [])];
+            yield return [new CustomPageRequest(2, 10, 5, [])];
         }
 
         public void Dispose() => connection.BulkDelete<Product>();
+
+        private void ReplaceProducts(int count)
+        {
+            connection.BulkDelete<Product>();
+            InsertProducts(count);
+        }
+
+        private void InsertProducts(int count, string department = "D1")
+        {
+            for (var index = 0; index < count; index++)
+            {
+                var product = ProductBuilder.NewInstance().Build();
+                product.Department = department;
+                product.Name = "Name" + index % 5;
+                product.Ean = department + index.ToString("D4");
+                connection.Insert(product);
+            }
+        }
+
+        private sealed class CustomPageRequest : IPageRequest
+        {
+            public CustomPageRequest(int pageIndex, int pageSize, long offset, IReadOnlyList<IOrderCriterion> orders)
+            {
+                PageIndex = pageIndex;
+                PageSize = pageSize;
+                Offset = offset;
+                Orders = orders;
+            }
+
+            public int PageIndex { get; }
+            public int PageSize { get; }
+            public long Offset { get; }
+            public IReadOnlyList<IOrderCriterion> Orders { get; }
+        }
     }
 }
