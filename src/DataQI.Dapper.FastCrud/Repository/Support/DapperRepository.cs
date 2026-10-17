@@ -11,6 +11,8 @@ using Dapper.FastCrud.Configuration.StatementOptions.Builders;
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
 using DataQI.Commons.Util;
+using DataQI.Commons.Repository.Paging;
+using DataQI.Commons.Repository.Paging.Support;
 
 using DataQI.Dapper.FastCrud.Query.Support;
 
@@ -127,16 +129,11 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             CancellationToken cancellationToken = default)
             => (await connection.FindAsync<TEntity>(CriteriaStatement(criteriaBuilder, 2))).SingleOrDefault();
 
-
         private static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> CriteriaStatement(
             Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
         {
-            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
-            var criteria = criteriaBuilder(new Criteria());
-
-            var predicate = DapperPredicateVisitor.BuildPredicate(criteria);
+            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
             var orderBy = DapperOrderByBuilder.BuildOrderBy(criteria.Orders);
-            var hasCriterions = criteria.Criterions.Count > 0;
 
             return statement =>
             {
@@ -151,6 +148,65 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
                 else if (orderBy != null)
                     statement.OrderBy(orderBy);
             };
+        }
+        
+        /// <inheritdoc />
+        public ISlice<TEntity> FindSlice(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
+        {
+            PagingRules.EnsurePage(page);
+            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
+            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
+            var rows = connection.Find<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
+                predicate, hasCriterions, orders, page.Offset, page.PageSize + 1L)).ToList();
+            return PagingRules.ToSlice(rows, page);
+        }
+
+        /// <inheritdoc />
+        /// <remarks>The cancellation token is accepted for interface compatibility but is not observed.</remarks>
+        public async Task<ISlice<TEntity>> FindSliceAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
+        {
+            PagingRules.EnsurePage(page);
+            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
+            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
+            var rows = (await connection.FindAsync<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
+                predicate, hasCriterions, orders, page.Offset, page.PageSize + 1L))).ToList();
+            return PagingRules.ToSlice(rows, page);
+        }
+
+        /// <inheritdoc />
+        /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count.</remarks>
+        public IPage<TEntity> FindPage(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
+        {
+            PagingRules.EnsurePage(page);
+            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
+            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
+            var rows = connection.Find<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
+                predicate, hasCriterions, orders, page.Offset, page.PageSize)).ToList();
+            var total = PagingRules.DeduceTotal(rows.Count, page)
+                ?? (long)connection.Count<TEntity>(DapperPagingBuilder<TEntity>.CountStatement(predicate, hasCriterions));
+            return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
+        }
+
+        /// <inheritdoc />
+        /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count. The cancellation token is not observed.</remarks>
+        public async Task<IPage<TEntity>> FindPageAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
+        {
+            PagingRules.EnsurePage(page);
+            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
+            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
+            var rows = (await connection.FindAsync<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
+                predicate, hasCriterions, orders, page.Offset, page.PageSize))).ToList();
+            var total = PagingRules.DeduceTotal(rows.Count, page)
+                ?? (long)await connection.CountAsync<TEntity>(DapperPagingBuilder<TEntity>.CountStatement(predicate, hasCriterions));
+            return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
+        }
+
+        private static (ICriteria Criteria, DapperPredicate Predicate, bool HasCriterions) BuildCriteria(
+            Func<ICriteria, ICriteria> criteriaBuilder)
+        {
+            Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
+            var criteria = criteriaBuilder(new Criteria());
+            return (criteria, DapperPredicateVisitor.BuildPredicate(criteria), criteria.Criterions.Count > 0);
         }
 
         /// <inheritdoc />

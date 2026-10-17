@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <PackageReference Include="Dapper.FastCrud" Version="2.6.7" />
-    <PackageReference Include="DataQI.Commons" Version="4.0.0-preview.2" />
+    <PackageReference Include="DataQI.Commons" Version="4.0.0-preview.3" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
   </ItemGroup>
 </Project>
