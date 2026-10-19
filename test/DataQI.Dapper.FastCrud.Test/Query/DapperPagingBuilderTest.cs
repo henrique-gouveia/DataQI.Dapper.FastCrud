@@ -25,35 +25,6 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         [Fact]
-        public void TestKeyPropertiesComeFromTheMapping()
-        {
-            Assert.Equal(new[] { nameof(Product.Id) }, DapperPagingBuilder<Product>.KeyProperties());
-        }
-
-        [Fact]
-        public void TestKeyPropertiesReflectMappingChangesAfterFirstRead()
-        {
-            var original = OrmConfiguration.GetDefaultEntityMapping<ReconfigurableEntity>();
-            try
-            {
-                var initialKeys = DapperPagingBuilder<ReconfigurableEntity>.KeyProperties();
-                var replacement = original.Clone()
-                    .SetProperty(e => e.Id, p => p.SetPrimaryKey(false))
-                    .SetProperty(e => e.AlternateId, p => p.SetPrimaryKey(true));
-                OrmConfiguration.SetDefaultEntityMapping(replacement);
-
-                var updatedKeys = DapperPagingBuilder<ReconfigurableEntity>.KeyProperties();
-
-                Assert.Equal(new[] { nameof(ReconfigurableEntity.Id) }, initialKeys);
-                Assert.Equal(new[] { nameof(ReconfigurableEntity.AlternateId) }, updatedKeys);
-            }
-            finally
-            {
-                OrmConfiguration.SetDefaultEntityMapping(original);
-            }
-        }
-
-        [Fact]
         public void TestPageStatementSkipsAndLimitsTheRows()
         {
             var predicate = DapperPredicateVisitor.BuildPredicate(new Criteria());
@@ -90,12 +61,5 @@ namespace DataQI.Dapper.FastCrud.Test.Query
         }
 
         public void Dispose() => connection.BulkDelete<Product>();
-
-        private sealed class ReconfigurableEntity
-        {
-            [System.ComponentModel.DataAnnotations.Key]
-            public int Id { get; set; }
-            public int AlternateId { get; set; }
-        }
     }
 }

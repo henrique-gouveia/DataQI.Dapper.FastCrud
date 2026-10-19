@@ -14,6 +14,7 @@ using DataQI.Commons.Util;
 using DataQI.Commons.Repository.Paging;
 using DataQI.Commons.Repository.Paging.Support;
 
+using DataQI.Dapper.FastCrud.Extensions;
 using DataQI.Dapper.FastCrud.Query.Support;
 
 namespace DataQI.Dapper.FastCrud.Repository.Support
@@ -153,11 +154,8 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <inheritdoc />
         public ISlice<TEntity> FindSlice(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
-            PagingRules.EnsurePage(page);
-            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
-            var rows = connection.Find<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
-                predicate, hasCriterions, orders, page.Offset, page.PageSize + 1L)).ToList();
+            var (pageStatement, _) = PagedStatements(criteriaBuilder, page, 1);
+            var rows = connection.Find<TEntity>(pageStatement).ToList();
             return PagingRules.ToSlice(rows, page);
         }
 
@@ -165,11 +163,8 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <remarks>The cancellation token is accepted for interface compatibility but is not observed.</remarks>
         public async Task<ISlice<TEntity>> FindSliceAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
         {
-            PagingRules.EnsurePage(page);
-            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
-            var rows = (await connection.FindAsync<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
-                predicate, hasCriterions, orders, page.Offset, page.PageSize + 1L))).ToList();
+            var (pageStatement, _) = PagedStatements(criteriaBuilder, page, 1);
+            var rows = (await connection.FindAsync<TEntity>(pageStatement)).ToList();
             return PagingRules.ToSlice(rows, page);
         }
 
@@ -177,13 +172,10 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count.</remarks>
         public IPage<TEntity> FindPage(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
-            PagingRules.EnsurePage(page);
-            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
-            var rows = connection.Find<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
-                predicate, hasCriterions, orders, page.Offset, page.PageSize)).ToList();
+            var (pageStatement, countStatement) = PagedStatements(criteriaBuilder, page, 0);
+            var rows = connection.Find<TEntity>(pageStatement).ToList();
             var total = PagingRules.DeduceTotal(rows.Count, page)
-                ?? (long)connection.Count<TEntity>(DapperPagingBuilder<TEntity>.CountStatement(predicate, hasCriterions));
+                ?? (long)connection.Count<TEntity>(countStatement);
             return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
         }
 
@@ -191,14 +183,25 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count. The cancellation token is not observed.</remarks>
         public async Task<IPage<TEntity>> FindPageAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
         {
+            var (pageStatement, countStatement) = PagedStatements(criteriaBuilder, page, 0);
+            var rows = (await connection.FindAsync<TEntity>(pageStatement)).ToList();
+            var total = PagingRules.DeduceTotal(rows.Count, page)
+                ?? (long)await connection.CountAsync<TEntity>(countStatement);
+            return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
+        }
+
+        private static (
+            Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> Page,
+            Action<IConditionalSqlStatementOptionsBuilder<TEntity>> Count) PagedStatements(
+            Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, long extra)
+        {
             PagingRules.EnsurePage(page);
             var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, DapperPagingBuilder<TEntity>.KeyProperties());
-            var rows = (await connection.FindAsync<TEntity>(DapperPagingBuilder<TEntity>.PageStatement(
-                predicate, hasCriterions, orders, page.Offset, page.PageSize))).ToList();
-            var total = PagingRules.DeduceTotal(rows.Count, page)
-                ?? (long)await connection.CountAsync<TEntity>(DapperPagingBuilder<TEntity>.CountStatement(predicate, hasCriterions));
-            return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
+            var keys = OrmConfiguration.GetDefaultEntityMapping<TEntity>().KeyProperties();
+            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, keys);
+            return (
+                DapperPagingBuilder<TEntity>.PageStatement(predicate, hasCriterions, orders, page.Offset, page.PageSize + extra),
+                DapperPagingBuilder<TEntity>.CountStatement(predicate, hasCriterions));
         }
 
         private static (ICriteria Criteria, DapperPredicate Predicate, bool HasCriterions) BuildCriteria(

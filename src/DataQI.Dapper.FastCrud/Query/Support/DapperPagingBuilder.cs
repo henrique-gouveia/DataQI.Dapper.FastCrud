@@ -11,15 +11,13 @@ namespace DataQI.Dapper.FastCrud.Query.Support
 {
     internal static class DapperPagingBuilder<TEntity> where TEntity : class
     {
-        public static IReadOnlyList<string> KeyProperties()
-            => OrmConfiguration.GetDefaultEntityMapping<TEntity>().GetProperties()
-                .Where(p => p.IsPrimaryKey).Select(p => p.PropertyName).ToArray();
-
         public static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> PageStatement(
             DapperPredicate predicate, bool hasCriterions, IReadOnlyList<IOrderCriterion> orders, long skip, long top)
         {
             var mappedProperties = new HashSet<string>(OrmConfiguration.GetDefaultEntityMapping<TEntity>()
-                .GetProperties().Select(p => p.PropertyName), StringComparer.Ordinal);
+                .GetProperties()
+                .Select(p => p.PropertyName),
+                StringComparer.Ordinal);
             foreach (var order in orders)
                 if (!mappedProperties.Contains(order.PropertyName))
                     throw new InvalidOperationException(
