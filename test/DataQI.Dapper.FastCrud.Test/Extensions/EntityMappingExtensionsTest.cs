@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 using Xunit;
 
 using Dapper.FastCrud;
@@ -40,7 +42,7 @@ namespace DataQI.Dapper.FastCrud.Test.Extensions
 
         private sealed class ReconfigurableEntity
         {
-            [System.ComponentModel.DataAnnotations.Key]
+            [Key]
             public int Id { get; set; }
             public int AlternateId { get; set; }
         }

@@ -133,83 +133,72 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         private static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> CriteriaStatement(
             Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
         {
-            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var orderBy = DapperOrderByBuilder.BuildOrderBy(criteria.Orders);
-
-            return statement =>
-            {
-                if (maxResults.HasValue)
-                    statement.Top(maxResults);
-
-                if (hasCriterions)
-                    statement
-                        .Where(predicate.Command)
-                        .OrderBy(orderBy)
-                        .WithParameters(predicate.Values);
-                else if (orderBy != null)
-                    statement.OrderBy(orderBy);
-            };
+            var (criteria, predicate) = BuildCriteria(criteriaBuilder);
+            return DapperStatementBuilder<TEntity>.BuildFind(predicate, criteria.Orders.ToArray(), maxResults);
         }
         
         /// <inheritdoc />
         public ISlice<TEntity> FindSlice(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
-            var (pageStatement, _) = PagedStatements(criteriaBuilder, page, 1);
+            var (pageStatement, _) = Paged(criteriaBuilder, page, 1);
             var rows = connection.Find<TEntity>(pageStatement).ToList();
-            return PagingRules.ToSlice(rows, page);
+            return PagingSupport.ToSlice(rows, page);
         }
 
         /// <inheritdoc />
         /// <remarks>The cancellation token is accepted for interface compatibility but is not observed.</remarks>
         public async Task<ISlice<TEntity>> FindSliceAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
         {
-            var (pageStatement, _) = PagedStatements(criteriaBuilder, page, 1);
+            var (pageStatement, _) = Paged(criteriaBuilder, page, 1);
             var rows = (await connection.FindAsync<TEntity>(pageStatement)).ToList();
-            return PagingRules.ToSlice(rows, page);
+            return PagingSupport.ToSlice(rows, page);
         }
 
         /// <inheritdoc />
         /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count.</remarks>
         public IPage<TEntity> FindPage(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
-            var (pageStatement, countStatement) = PagedStatements(criteriaBuilder, page, 0);
+            var (pageStatement, whereStatement) = Paged(criteriaBuilder, page, 0);
             var rows = connection.Find<TEntity>(pageStatement).ToList();
-            var total = PagingRules.DeduceTotal(rows.Count, page)
-                ?? (long)connection.Count<TEntity>(countStatement);
-            return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
+            var total = PagingSupport.DeduceTotal(rows.Count, page)
+                ?? (long)connection.Count<TEntity>(whereStatement);
+            return PagingSupport.ToPage(rows, page, total);
         }
 
         /// <inheritdoc />
         /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count. The cancellation token is not observed.</remarks>
         public async Task<IPage<TEntity>> FindPageAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
         {
-            var (pageStatement, countStatement) = PagedStatements(criteriaBuilder, page, 0);
+            var (pageStatement, whereStatement) = Paged(criteriaBuilder, page, 0);
             var rows = (await connection.FindAsync<TEntity>(pageStatement)).ToList();
-            var total = PagingRules.DeduceTotal(rows.Count, page)
-                ?? (long)await connection.CountAsync<TEntity>(countStatement);
-            return new Page<TEntity>(rows, page.PageIndex, page.PageSize, total);
+            var total = PagingSupport.DeduceTotal(rows.Count, page)
+                ?? (long)await connection.CountAsync<TEntity>(whereStatement);
+            return PagingSupport.ToPage(rows, page, total);
         }
 
         private static (
             Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> Page,
-            Action<IConditionalSqlStatementOptionsBuilder<TEntity>> Count) PagedStatements(
-            Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, long extra)
+            Action<IConditionalSqlStatementOptionsBuilder<TEntity>> Where
+        ) Paged(
+            Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, int extra)
         {
-            PagingRules.EnsurePage(page);
-            var (criteria, predicate, hasCriterions) = BuildCriteria(criteriaBuilder);
-            var keys = OrmConfiguration.GetDefaultEntityMapping<TEntity>().KeyProperties();
-            var orders = PagingRules.MergeOrders<TEntity>(criteria.Orders, page, keys);
+            PagingSupport.EnsurePage(page);
+            var (criteria, predicate) = BuildCriteria(criteriaBuilder);
+            var mapping = OrmConfiguration.GetDefaultEntityMapping<TEntity>();
+            IReadOnlyList<string> keyNames = mapping.KeyProperties();
+            var orders = PagingSupport.MergeOrders<TEntity>(criteria.Orders, page, keyNames);
             return (
-                DapperPagingBuilder<TEntity>.PageStatement(predicate, hasCriterions, orders, page.Offset, page.PageSize + extra),
-                DapperPagingBuilder<TEntity>.CountStatement(predicate, hasCriterions));
+                DapperStatementBuilder<TEntity>.BuildPage(predicate, orders, mapping,
+                    page.Offset, page.PageSize + extra),
+                DapperStatementBuilder<TEntity>.BuildWhere(predicate));
         }
 
-        private static (ICriteria Criteria, DapperPredicate Predicate, bool HasCriterions) BuildCriteria(
+        private static (ICriteria Criteria, DapperPredicate Filter) BuildCriteria(
             Func<ICriteria, ICriteria> criteriaBuilder)
         {
             Assert.NotNull(criteriaBuilder, "CriteriaBuilder must not be null");
             var criteria = criteriaBuilder(new Criteria());
-            return (criteria, DapperPredicateVisitor.BuildPredicate(criteria), criteria.Criterions.Count > 0);
+            return (criteria, DapperPredicateVisitor.BuildPredicate(criteria));
         }
 
         /// <inheritdoc />

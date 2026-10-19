@@ -9,7 +9,6 @@ using Dapper.FastCrud;
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Ast;
 using DataQI.Commons.Query.Support;
-using DataQI.Dapper.FastCrud.Query;
 using DataQI.Dapper.FastCrud.Query.Support;
 
 using Moq;
@@ -19,6 +18,14 @@ namespace DataQI.Dapper.FastCrud.Test.Query
 {
     public class DapperPredicateVisitorTest : DapperExpressionTestBase
     {
+        [Fact]
+        public void TestIsEmptyReflectsWhetherCriteriaHaveCriterions()
+        {
+            Assert.True(DapperPredicateVisitor.BuildPredicate(new Criteria()).IsEmpty);
+            Assert.False(DapperPredicateVisitor.BuildPredicate(new Criteria()
+                .Add(Restrictions.Equal("FirstName", "Adams"))).IsEmpty);
+        }
+
         [Fact]
         public void TestBuildComparisonCorrectly()
         {
