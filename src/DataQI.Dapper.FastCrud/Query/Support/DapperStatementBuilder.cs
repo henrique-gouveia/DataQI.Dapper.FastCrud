@@ -9,6 +9,7 @@ using Dapper.FastCrud.Mappings;
 
 using DataQI.Commons.Query;
 using DataQI.Commons.Query.Support;
+using DataQI.Commons.Util;
 
 namespace DataQI.Dapper.FastCrud.Query.Support
 {
@@ -37,9 +38,8 @@ namespace DataQI.Dapper.FastCrud.Query.Support
             var mappedProperties = new HashSet<string>(mapping.GetProperties().Select(p => p.PropertyName),
                 StringComparer.Ordinal);
             foreach (var order in orders)
-                if (!mappedProperties.Contains(order.PropertyName))
-                    throw new InvalidOperationException(
-                        $"Cannot order {typeof(TEntity).Name} by unknown property '{order.PropertyName}'.");
+                Assert.True<InvalidOperationException>(mappedProperties.Contains(order.PropertyName),
+                    () => $"Cannot order {typeof(TEntity).Name} by unknown property '{order.PropertyName}'.");
 
             var orderBy = BuildOrderBy(orders);
             return statement =>
