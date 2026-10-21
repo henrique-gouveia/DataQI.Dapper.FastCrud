@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Dapper.FastCrud;
+using Moq;
 using Xunit;
 
 using DataQI.Commons.Query;
@@ -212,6 +213,44 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
             Assert.Empty(page.Items);
             Assert.Equal(0, page.TotalCount);
             Assert.Equal(0, page.TotalPages);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task TestFindSliceExecutesOneCommandWithoutCount(bool useAsyncMethod)
+        {
+            var commands = new List<IDbCommand>();
+            var repository = ObserveCommands(commands);
+
+            if (useAsyncMethod)
+                await repository.FindSliceAsync(c => c, PageRequest.Of(0, 10));
+            else
+                repository.FindSlice(c => c, PageRequest.Of(0, 10));
+
+            Assert.Single(commands);
+            Assert.DoesNotMatch(@"(?i)\bCOUNT\s*\(", commands[0].CommandText);
+        }
+
+        [Theory]
+        [InlineData(false, 2, 1, false)]
+        [InlineData(true, 2, 1, false)]
+        [InlineData(false, 1, 2, true)]
+        [InlineData(true, 1, 2, true)]
+        public async Task TestFindPageCountsOnlyWhenTotalCannotBeDeduced(
+            bool useAsyncMethod, int pageIndex, int commandCount, bool hasCount)
+        {
+            var commands = new List<IDbCommand>();
+            var repository = ObserveCommands(commands);
+
+            if (useAsyncMethod)
+                await repository.FindPageAsync(c => c, PageRequest.Of(pageIndex, 10));
+            else
+                repository.FindPage(c => c, PageRequest.Of(pageIndex, 10));
+
+            Assert.Equal(commandCount, commands.Count);
+            Assert.Equal(hasCount, commands.Any(command =>
+                System.Text.RegularExpressions.Regex.IsMatch(command.CommandText, @"(?i)\bCOUNT\s*\(")));
         }
 
         [Fact]
@@ -448,6 +487,20 @@ namespace DataQI.Dapper.FastCrud.Test.Repository
         {
             connection.BulkDelete<Product>();
             InsertProducts(count);
+        }
+
+        private DapperRepository<Product> ObserveCommands(List<IDbCommand> commands)
+        {
+            var observedConnection = new Mock<IDbConnection>(MockBehavior.Strict);
+            observedConnection.SetupGet(c => c.State).Returns(connection.State);
+            observedConnection.SetupGet(c => c.ConnectionString).Returns(connection.ConnectionString);
+            observedConnection.Setup(c => c.CreateCommand()).Returns(() =>
+            {
+                var command = connection.CreateCommand();
+                commands.Add(command);
+                return command;
+            });
+            return new DapperRepository<Product>(observedConnection.Object);
         }
 
         private void InsertProducts(int count, string department = "D1")
