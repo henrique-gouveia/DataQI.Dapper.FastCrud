@@ -119,7 +119,7 @@ namespace DataQI.Dapper.FastCrud.Query.Support
 
             var command = FormattableStringFactory.Create(format, expressions.ToArray());
 
-            return new DapperPredicate(command, visitor.parameters);
+            return new DapperPredicate(command, visitor.parameters, criteria.Criterions.Count == 0);
         }
     }
 }

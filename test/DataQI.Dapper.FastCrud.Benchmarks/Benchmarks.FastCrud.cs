@@ -21,6 +21,16 @@ public class FastCrudBenchmark : BenchmarkBase
         return entities;
     }
     
+    [Benchmark(Description = "Paging<T>")]
+    public IList<Entity> FindSlice()
+    {
+        PrepareStep();
+        var rows = Connection.Find<Entity>(s => s.OrderBy($"{Sql.Column(nameof(Entity.Id))} ASC").Skip(10).Top(11)).ToList();
+        if (rows.Count > 10)
+            rows.RemoveAt(10);
+        return rows;
+    }
+
     [Benchmark(Description = "FindOne<T>")]
     public Entity? FindOne()
     {
