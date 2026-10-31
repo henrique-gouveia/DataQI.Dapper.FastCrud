@@ -413,12 +413,13 @@ This provider reduces repository boilerplate for applications already using Fast
 
 ## Release Notes
 
-**v4.0.0 - current source**
+**v4.0.0 - upcoming release**
 
-- New! Add criteria and query-method paging through `ISlice<T>`, `IPage<T>` and `IPageRequest`.
-- Change! Provider repository interfaces now combine the independent `ICrudRepository` and `IPagedRepository` contracts; custom implementations must supply its four methods.
+- New! Add slice and page queries through criteria or query methods, with stable ordering and a count query only when the total cannot be deduced.
+- **Breaking Change!** `IDapperRepository<TEntity>` now combines the independent CRUD and paging contracts; custom implementations must add `FindSlice`, `FindSliceAsync`, `FindPage` and `FindPageAsync`.
 - **Breaking Change!** Replaced the public per-operator translation pipeline with internal visitors over the Commons 4.x criteria AST; removed the translation types listed in the migration guide.
-- Change! Negation emits `Not (...)`, and invalid ordering properties fail with an `ArgumentException`.
+- Change! Negation emits `Not (...)`.
+- Change! Unknown order properties in non-paged criteria queries fail with `ArgumentException`; paging rejects them with `InvalidOperationException` before constructing SQL.
 - Change! Added XML documentation for public APIs.
 - Change! tests, samples, and benchmarks target .NET 10; the library remains `netstandard2.0`.
 
