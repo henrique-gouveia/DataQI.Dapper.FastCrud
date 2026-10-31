@@ -134,7 +134,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             Func<ICriteria, ICriteria> criteriaBuilder, long? maxResults = null)
         {
             var (criteria, predicate) = BuildCriteria(criteriaBuilder);
-            return DapperStatementBuilder<TEntity>.BuildFind(predicate, criteria.Orders.ToArray(), maxResults);
+            return DapperStatementBuilder<TEntity>.BuildFind(predicate, criteria.Orders, maxResults);
         }
         
         /// <inheritdoc />

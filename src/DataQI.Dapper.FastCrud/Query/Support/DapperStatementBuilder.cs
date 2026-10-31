@@ -16,7 +16,7 @@ namespace DataQI.Dapper.FastCrud.Query.Support
     internal static class DapperStatementBuilder<TEntity> where TEntity : class
     {
         public static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> BuildFind(
-            DapperPredicate filter, IReadOnlyList<IOrderCriterion> orders, long? top)
+            DapperPredicate filter, IReadOnlyCollection<IOrderCriterion> orders, long? top)
         {
             var orderBy = BuildOrderBy(orders);
             return statement =>
@@ -32,7 +32,7 @@ namespace DataQI.Dapper.FastCrud.Query.Support
         }
 
         public static Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> BuildPage(
-            DapperPredicate filter, IReadOnlyList<IOrderCriterion> orders, EntityMapping<TEntity> mapping,
+            DapperPredicate filter, IReadOnlyCollection<IOrderCriterion> orders, EntityMapping<TEntity> mapping,
             long skip, long take)
         {
             var mappedProperties = new HashSet<string>(mapping.GetProperties().Select(p => p.PropertyName),
@@ -57,7 +57,7 @@ namespace DataQI.Dapper.FastCrud.Query.Support
                     statement.Where(filter.Command).WithParameters(filter.Values);
             };
 
-        private static FormattableString BuildOrderBy(IReadOnlyList<IOrderCriterion> orders)
+        private static FormattableString BuildOrderBy(IReadOnlyCollection<IOrderCriterion> orders)
         {
             if (orders.Count == 0)
                 return null;
