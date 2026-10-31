@@ -7,6 +7,17 @@ DataQI Dapper.FastCrud creates repository implementations from C# interfaces usi
 [![NuGet](https://img.shields.io/nuget/v/DataQI.Dapper.FastCrud.svg)](https://www.nuget.org/packages/DataQI.Dapper.FastCrud/)
 [![License](https://img.shields.io/github/license/henrique-gouveia/DataQI.Dapper.FastCrud.svg)](https://github.com/henrique-gouveia/DataQI.Dapper.FastCrud/blob/main/LICENSE)
 
+## Features
+
+- Synchronous and asynchronous CRUD operations backed by Dapper.FastCrud.
+- Repositories declared as C# interfaces, with query methods derived from method names.
+- Criteria with comparisons, text matches, logical groups, and ordering.
+- Collection and single-entity queries, plus paging with `ISlice<T>` and `IPage<T>`.
+- Deterministic paging order with primary-key tie-breaks and total counts only when needed.
+- Native FastCrud statement builders for custom filters, ordering, and paging.
+- Repository factories, custom implementations, and Microsoft dependency injection integration.
+- Query-method completion through the transitive DataQI.Analyzers dependency.
+
 ## Getting Started
 
 ### Installing
@@ -181,6 +192,36 @@ persons = personRepository.FindByFirstNameAndLastNameOrBirthDateGreaterThan(
     "Ada", "Lovelace", new DateTime(1900, 1, 1));
 persons = personRepository.FindByFirstNameStartingWith("Ada%");
 ```
+
+#### Paging
+
+Added to `IProductRepository` (import `DataQI.Commons.Repository.Paging` and `DataQI.Commons.Repository.Paging.Support`):
+
+```csharp
+ISlice<Product> FindByDepartmentOrderByNameAsc(string department, IPageRequest page);
+Task<IPage<Product>> FindByDepartmentAsync(
+    string department, IPageRequest page, CancellationToken cancellationToken = default);
+```
+
+```csharp
+var request = PageRequest.Of(0, 20, Order.Asc(nameof(Product.Name)));
+var slice = repository.FindSlice(c => c
+    .Add(Restrictions.Equal(nameof(Product.Department), "D1")), request);
+var page = repository.FindPage(c => c, request);
+var namedSlice = repository.FindByDepartmentOrderByNameAsc("D1", request);
+var namedPage = await repository.FindByDepartmentAsync("D1", request, cancellationToken);
+var asyncSlice = await repository.FindSliceAsync(c => c, request, cancellationToken);
+```
+
+`PageIndex` is zero-based. `ISlice<T>` includes read-only `Items`, `HasNext` and `HasPrevious`; `IPage<T>` adds `long TotalCount` and `long TotalPages`. Slice uses one query and is the recommended default. Page runs `COUNT` only when needed: a partial page with items, or an empty first page, reveals the total. An empty page beyond the end still counts matching rows.
+
+Page items and total can come from two non-atomic queries; wrap the operation in a transaction if consistency matters. Clients should cap `PageSize`; deep `OFFSET` degrades performance. Requests require a positive size below `int.MaxValue` and an offset no larger than `int.MaxValue`; a null request throws `ArgumentException`.
+
+Ordering follows method-name `OrderBy`, criteria `AddOrder`, then `page.Orders`, keeping the first occurrence of each property. Missing primary-key properties are appended ascending for stable ties. `NULL` ordering depends on the database. An entity without a key needs an explicit order. Paging rejects any order property absent from the entity mapping before constructing SQL, with `InvalidOperationException` naming the entity and property (including names supplied through URL parameters).
+
+Paging query methods require exactly one `IPageRequest` as the last non-token parameter and a matching slice/page return type. An optional `CancellationToken` belongs last; async methods forward it to the provider. Invalid parsed-query signatures fail at proxy creation. See the [Commons query contracts](https://github.com/henrique-gouveia/DataQI.Commons#paging) for the full rules.
+
+Dapper accepts `CancellationToken` for compatibility but does not observe it. Page totals use FastCrud `Count`, which returns `int`: totals above `int.MaxValue` matching rows are unsupported. Slice has no count limit.
 
 ### Using Async Query Methods
 
@@ -372,10 +413,13 @@ This provider reduces repository boilerplate for applications already using Fast
 
 ## Release Notes
 
-**v4.0.0 - current source**
+**v4.0.0 - upcoming release**
 
+- New! Add slice and page queries through criteria or query methods, with stable ordering and a count query only when the total cannot be deduced.
+- **Breaking Change!** `IDapperRepository<TEntity>` now combines the independent CRUD and paging contracts; custom implementations must add `FindSlice`, `FindSliceAsync`, `FindPage` and `FindPageAsync`.
 - **Breaking Change!** Replaced the public per-operator translation pipeline with internal visitors over the Commons 4.x criteria AST; removed the translation types listed in the migration guide.
-- Change! Negation emits `Not (...)`, and invalid ordering properties fail with an `ArgumentException`.
+- Change! Negation emits `Not (...)`.
+- Change! Unknown order properties in non-paged criteria queries fail with `ArgumentException`; paging rejects them with `InvalidOperationException` before constructing SQL.
 - Change! Added XML documentation for public APIs.
 - Change! tests, samples, and benchmarks target .NET 10; the library remains `netstandard2.0`.
 

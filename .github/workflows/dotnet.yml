@@ -9,6 +9,9 @@ on:
       - 'release/**'
     tags:
       - '*'
+  pull_request:
+    branches:
+      - release/v4.0
 
 jobs:
   build:

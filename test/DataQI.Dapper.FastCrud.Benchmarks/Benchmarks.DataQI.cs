@@ -1,3 +1,5 @@
+using DataQI.Commons.Repository.Paging;
+using DataQI.Commons.Repository.Paging.Support;
 using DataQI.Dapper.FastCrud.Repository;
 using DataQI.Dapper.FastCrud.Repository.Support;
 
@@ -28,6 +30,13 @@ public class DataQiBenchmark : BenchmarkBase
         return entities;
     }
     
+    [Benchmark(Description = "Paging<T>")]
+    public ISlice<Entity> FindSlice()
+    {
+        PrepareStep();
+        return entityRepository.FindSlice(c => c, PageRequest.Of(1, 10));
+    }
+
     [Benchmark(Description = "FindOne<T>")]
     public Entity? FindOne()
     {
