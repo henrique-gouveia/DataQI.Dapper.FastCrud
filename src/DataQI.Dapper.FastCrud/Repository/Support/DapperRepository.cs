@@ -140,7 +140,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <inheritdoc />
         public ISlice<TEntity> FindSlice(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
-            var (pageStatement, _) = Paged(criteriaBuilder, page, 1);
+            var (pageStatement, _) = Paged(criteriaBuilder, page, true);
             var rows = connection.Find<TEntity>(pageStatement).ToList();
             return PagingSupport.ToSlice(rows, page);
         }
@@ -149,7 +149,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <remarks>The cancellation token is accepted for interface compatibility but is not observed.</remarks>
         public async Task<ISlice<TEntity>> FindSliceAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
         {
-            var (pageStatement, _) = Paged(criteriaBuilder, page, 1);
+            var (pageStatement, _) = Paged(criteriaBuilder, page, true);
             var rows = (await connection.FindAsync<TEntity>(pageStatement)).ToList();
             return PagingSupport.ToSlice(rows, page);
         }
@@ -158,7 +158,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count.</remarks>
         public IPage<TEntity> FindPage(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page)
         {
-            var (pageStatement, whereStatement) = Paged(criteriaBuilder, page, 0);
+            var (pageStatement, whereStatement) = Paged(criteriaBuilder, page, false);
             var rows = connection.Find<TEntity>(pageStatement).ToList();
             var total = PagingSupport.DeduceTotal(rows.Count, page)
                 ?? (long)connection.Count<TEntity>(whereStatement);
@@ -169,7 +169,7 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
         /// <remarks>Page items and total may require two non-atomic queries. Totals above int.MaxValue matching rows are unsupported by FastCrud Count. The cancellation token is not observed.</remarks>
         public async Task<IPage<TEntity>> FindPageAsync(Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, CancellationToken cancellationToken = default)
         {
-            var (pageStatement, whereStatement) = Paged(criteriaBuilder, page, 0);
+            var (pageStatement, whereStatement) = Paged(criteriaBuilder, page, false);
             var rows = (await connection.FindAsync<TEntity>(pageStatement)).ToList();
             var total = PagingSupport.DeduceTotal(rows.Count, page)
                 ?? (long)await connection.CountAsync<TEntity>(whereStatement);
@@ -180,16 +180,15 @@ namespace DataQI.Dapper.FastCrud.Repository.Support
             Action<IRangedBatchSelectSqlSqlStatementOptionsOptionsBuilder<TEntity>> Page,
             Action<IConditionalSqlStatementOptionsBuilder<TEntity>> Where
         ) Paged(
-            Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, int extra)
+            Func<ICriteria, ICriteria> criteriaBuilder, IPageRequest page, bool forSlice)
         {
-            PagingSupport.EnsurePage(page);
+            var take = PagingSupport.FetchSize(page, forSlice);
             var (criteria, predicate) = BuildCriteria(criteriaBuilder);
             var mapping = OrmConfiguration.GetDefaultEntityMapping<TEntity>();
             IReadOnlyList<string> keyNames = mapping.KeyProperties();
             var orders = PagingSupport.MergeOrders<TEntity>(criteria.Orders, page, keyNames);
             return (
-                DapperStatementBuilder<TEntity>.BuildPage(predicate, orders, mapping,
-                    page.Offset, page.PageSize + extra),
+                DapperStatementBuilder<TEntity>.BuildPage(predicate, orders, mapping, page.Offset, take),
                 DapperStatementBuilder<TEntity>.BuildWhere(predicate));
         }
 
